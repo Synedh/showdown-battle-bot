@@ -10,9 +10,9 @@ async def stringing(websocket, string_tab):
     if string_tab[1] == "challstr":
         # Si la challstr a  été encoyée, on peut se connecter
         await log_in(websocket, string_tab[2], string_tab[3])
-    # elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
-    #     # Si on est loggé, alors on peut commencer les combats
-    #     await websocket.send("|/challenge synedh, gen7randombattle")
+    elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
+        # Si on est loggé, alors on peut commencer les combats
+        pass
     elif "battle" in string_tab[0]:
         # Si on reçoit un message dans une interfacede combat
         print("Battlelog")
