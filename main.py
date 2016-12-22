@@ -25,16 +25,20 @@ async def battle_tag(websocket, message):
         if len(line) > 1:
             current = line.split('|')
             if current[1] == "init":
-                #creation de la bataille
+                # Creation de la bataille
                 battles.append(Battle(lines[0].split('-')[len(lines[0].split('-')) - 1]))
             elif current[1] == "player" and current[3].lower() == "suchtestnot":
+                # Récupérer l'id joueur du bot
                 battle.set_player_id(current[2])
             elif current[1] == "request":
+                # Maj team bot
                 battle.req_loader(current[2])
             elif current[1] == "switch" and battle.player_id not in current[2]:
+                # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
                 battle.update_enemy(current[3].split(',')[0], current[4])
             elif current[1] == "turn":
-                await battle.makeMove(websocket, current[2])
+                # Phase de reflexion
+                await battle.make_move(websocket, current[2])
             elif current[1] == "c":
                 # This is a message
                 pass
