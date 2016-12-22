@@ -1,6 +1,7 @@
 import json
 
 from pokemon import Pokemon, Team
+import senders
 
 
 class Battle:
@@ -32,5 +33,6 @@ class Battle:
         print("** Update enemy : " + pkm_name)
         pass
 
-    def makeMove(self, turn):
+    async def makeMove(self, websocket, turn):
+        await senders.sendmessage(websocket, self.room_id, "Coucou.")
         print("** Start searching, turn : " + turn)

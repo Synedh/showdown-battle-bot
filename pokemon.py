@@ -14,7 +14,15 @@ class Status(Enum):
 
 def infos_for_pokemon(pkm_name):
     pkm_name = pkm_name.lower()
-    if "rotom" in pkm_name or "wormadam" in pkm_name or "lycanroc" in pkm_name or "arceus" in pkm_name or "alola" in pkm_name:
+    if "rotom" in pkm_name \
+            or "wormadam" in pkm_name \
+            or "lycanroc" in pkm_name \
+            or "arceus" in pkm_name \
+            or "alola" in pkm_name \
+            or "origin" in pkm_name\
+            or "zygarde-" in pkm_name\
+            or "shaymin-" in pkm_name\
+            or "genesect-" in pkm_name:
         pkm_name = pkm_name.split('-')[0] + pkm_name.split('-')[1]
     res = {
         "types": [],

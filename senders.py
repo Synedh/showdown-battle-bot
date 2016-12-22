@@ -12,6 +12,9 @@ async def searching(websocket):
 async def challenge(websocket, player):
     await sender(websocket, "", "/challenge " + player + ", gen7randombattle")
 
+async def sendmessage(websocket, room_id, message):
+    await sender(websocket, "battle-gen7randombattle-" + room_id, message)
+
 async def sendmove(websocket, room_id, move, turn):
     await sender(websocket, "battle-gen7randombattle-" + room_id, "/choose move " + str(move), str(turn))
 
