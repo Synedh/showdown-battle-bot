@@ -13,17 +13,7 @@ class Status(Enum):
 
 
 def infos_for_pokemon(pkm_name):
-    pkm_name = pkm_name.lower()
-    if "rotom" in pkm_name \
-            or "wormadam-" in pkm_name \
-            or "lycanroc-" in pkm_name \
-            or "arceus-" in pkm_name \
-            or "alola" in pkm_name \
-            or "origin" in pkm_name\
-            or "zygarde-" in pkm_name\
-            or "shaymin-" in pkm_name\
-            or "genesect-" in pkm_name:
-        pkm_name = pkm_name.split('-')[0] + pkm_name.split('-')[1]
+    pkm_name = pkm_name.lower().replace('-', '').replace(' ', '').replace('%', '').replace('\'', '')
     res = {
         "types": [],
         "possibleAbilities": [],
@@ -63,16 +53,21 @@ class Pokemon:
         self.moves = ["possibleMoves"]
 
     def load_known(self, abilities, stats, moves):
-        self.types = infos_for_pokemon(self.name)["types"]
+        infos = infos_for_pokemon(self.name)
+        self.types = infos["types"]
         self.abilities = abilities
-        self.stats = stats
-        self.moves = moves
+        self.stats = infos["baseStats"]
+        with open("data/moves.json") as data_file:
+            json_file = json.load(data_file)
+            for move in moves:
+                self.moves.append(json_file[move.replace('60', '')])
 
-    def set_status(self, status):
+    def update(self, status, active):
         self.status = status
-
-    def set_activity(self, active):
         self.active = active
+
+    def __repr__(self):
+        return str(vars(self))
 
 
 class Team:
@@ -81,19 +76,28 @@ class Team:
         for pkm in pkms:
             self.add(pkm)
 
+    def active(self):
+        for pkm in self.pokemons:
+            if pkm.active:
+                return pkm
+        return None
+
     def add(self, pokemon):
         if len(self.pokemons) < 6:
             self.pokemons.append(pokemon)
         else:
-            print("Error : There is yet six pokemon in the team")
+            print("Error : There is yet six pokemon in the team.")
             exit()
 
     def __contains__(self, pkm_name: str):
-        for pkm in self.pokemons:
-            if pkm.name == pkm_name:
-                return True
-        return False
+        return any(pkm.name == pkm_name for pkm in self.pokemons)
+        # for pkm in self.pokemons:
+        #     if pkm.name == pkm_name:
+        #         return True
+        # return False
 
     def __repr__(self):
+        res = ""
         for pkm in self.pokemons:
-            print(vars(pkm))
+            res += str(vars(pkm)) + "\n"
+        return res
