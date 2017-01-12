@@ -13,7 +13,7 @@ class Status(Enum):
 
 
 def infos_for_pokemon(pkm_name):
-    pkm_name = pkm_name.lower().replace('-', '').replace(' ', '').replace('%', '').replace('\'', '')
+    pkm_name = pkm_name.lower().replace('-', '').replace(' ', '').replace('%', '').replace('\'', '').replace('.', '')
     res = {
         "types": [],
         "possibleAbilities": [],
@@ -50,7 +50,7 @@ class Pokemon:
         self.types = infos["types"]
         self.abilities = infos["possibleAbilities"]
         self.stats = infos["baseStats"]
-        self.moves = ["possibleMoves"]
+        self.moves = infos["possibleMoves"]
 
     def load_known(self, abilities, stats, moves):
         infos = infos_for_pokemon(self.name)
