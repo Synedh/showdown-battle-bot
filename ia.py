@@ -42,15 +42,15 @@ def make_best_switch(battle):
     team = battle.bot_team
     enemy_pkm = battle.enemy_team.active()
     best_pkm = None
-    effi = 0
+    effi = -1024
     for pokemon in team.pokemons:
         if pokemon == team.active():
             continue
         if effi_pkm(pokemon, enemy_pkm) > effi:
-            best_pkm = pokemon.name
+            best_pkm = pokemon
             effi = effi_pkm(pokemon, enemy_pkm)
-    print(best_pkm)
-    return best_pkm
+    print(best_pkm.name)
+    return team.pokemons.index(best_pkm)
 
 
 def make_best_move(battle):
