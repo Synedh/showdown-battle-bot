@@ -3,6 +3,8 @@
 import websockets
 import asyncio
 from src.webreq_gest import stringing
+from src.pokemon import Pokemon
+from src.ia import make_best_move_test
 
 async def main():
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
@@ -12,3 +14,12 @@ async def main():
             await stringing(websocket, message)
 
 asyncio.get_event_loop().run_until_complete(main())
+
+# def test():
+#     pkm1 = Pokemon("dugtrio", None, None)
+#     pkm1.load_unknown()
+#     pkm2 = Pokemon("tropius", None, None)
+#     pkm2.load_unknown()
+#     make_best_move_test(pkm1, pkm2)
+
+# test()
