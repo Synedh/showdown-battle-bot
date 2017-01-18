@@ -3,7 +3,7 @@ async def sender(websocket, room, message1, message2=None):
         string = room + '|' + message1 + '|' + message2
     else:
         string = room + '|' + message1
-    print('>> ' + string)
+    print('>> {}'.format(string))
     await websocket.send(string)
 
 async def searching(websocket):

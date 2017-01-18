@@ -45,10 +45,17 @@ class Battle:
             # for pkm in self.enemy_team.pokemons:
             #     pkm.active = False
 
-    async def make_move(self, websocket, turn):
+    async def faint(self, websocket):
+        self.bot_team.active().condition = "0 fnt"
+        for pokemon in self.bot_team.pokemons:
+            if pokemon.condition != "0 fnt":
+                await self.make_switch(websocket)
+                break
+
+    async def make_action(self, websocket):
         self.turn += 1
         await senders.sendmove(websocket, self.room_id, make_best_action(self), self.turn)
 
     async def make_switch(self, websocket):
         self.turn += 1
-        await senders.sendswitch(websocket, self.room_id, make_best_switch(self), self.turn)
+        await senders.sendswitch(websocket, self.room_id, make_best_switch(self)[0], self.turn)

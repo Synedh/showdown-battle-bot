@@ -38,11 +38,13 @@ async def battle_tag(websocket, message):
                 # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
                 battle.update_enemy(current[3].split(',')[0], current[4])
             elif current[1] == "faint" and battle.player_id in current[2]:
-                await battle.make_switch(websocket)
+                # Pokemon courant mort
+                await battle.faint(websocket)
             elif current[1] == "turn":
                 # Phase de reflexion
-                await battle.make_move(websocket, current[2])
+                await battle.make_action(websocket)
             elif current[1] == "win":
+                await senders.sendmessage(websocket, battles[len(battles) - 1].room_id, "wp")
                 await senders.leaving(websocket, battle.room_id)
             elif current[1] == "c":
                 # This is a message
@@ -63,7 +65,7 @@ async def stringing(websocket, message):
         try:
             if string_tab[2].split('\"')[3] != "challengeTo":
                 await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3], "")
-        except:
+        except KeyError:
             pass
     elif "battle" in string_tab[0]:
         # Si on recoit un message dans une interface de combat
