@@ -3,7 +3,7 @@ import json
 from ia import make_best_action, make_best_switch
 from pokemon import Pokemon, Team
 
-from src import senders
+import senders
 
 
 class Battle:
@@ -15,20 +15,19 @@ class Battle:
         self.room_id = room_id
         self.player_id = ""
 
-    def req_loader(self, req):
+    async def req_loader(self, req, websocket):
         jsonobj = json.loads(req)
-        if "wait" in jsonobj.keys():
-            self.turn += 1
-            return
-        if "forceSwitch" in jsonobj.keys():
-            return
-        self.current_pkm = jsonobj['active']
+        self.turn += 1
         objteam = jsonobj['side']['pokemon']
         self.bot_team = Team()
         for pkm in objteam:
             newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'])
             newpkm.load_known([pkm['baseAbility']], pkm['stats'], pkm['moves'])
             self.bot_team.add(newpkm)
+        if "forceSwitch" in jsonobj.keys():
+            await self.make_switch(websocket)
+        elif "active" in jsonobj.keys():
+            self.current_pkm = jsonobj["active"]
 
     def set_player_id(self, player_id):
         self.player_id = player_id
@@ -54,9 +53,7 @@ class Battle:
                 break
 
     async def make_action(self, websocket):
-        self.turn += 1
         await senders.sendmove(websocket, self.room_id, make_best_action(self), self.turn)
 
     async def make_switch(self, websocket):
-        self.turn += 1
         await senders.sendswitch(websocket, self.room_id, make_best_switch(self)[0], self.turn)

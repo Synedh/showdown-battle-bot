@@ -1,12 +1,9 @@
 #!/usr/bin/env python3
 
-import asyncio
-
-import websockets
 from login import log_in
-from state import Battle
+from battle import Battle
 
-from src import senders
+import senders
 
 battles = []
 
@@ -16,7 +13,6 @@ def check_battle(battle_list, room_id):
         if battle.room_id == room_id:
             return battle
     return None
-
 
 async def battle_tag(websocket, message):
     global battles
@@ -34,13 +30,10 @@ async def battle_tag(websocket, message):
                 battle.set_player_id(current[2])
             elif current[1] == "request":
                 # Maj team bot
-                battle.req_loader(current[2])
+                await battle.req_loader(current[2], websocket)
             elif current[1] == "switch" and battle.player_id not in current[2]:
                 # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
                 battle.update_enemy(current[3].split(',')[0], current[4])
-            elif current[1] == "faint" and battle.player_id in current[2]:
-                # Pokemon courant mort
-                await battle.faint(websocket)
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
