@@ -1,10 +1,10 @@
-import requests
 import json
+import requests
+from src.senders import sender
 
-from senders import sender
 
 async def log_in(websocket, challid, chall):
-    with open("id.txt") as logfile:
+    with open("src/id.txt") as logfile:
         username = logfile.readline()[:-1]
         password = logfile.readline()[:-1]
     resp = requests.post("https://play.pokemonshowdown.com/action.php?",
