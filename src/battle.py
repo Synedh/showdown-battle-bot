@@ -58,7 +58,11 @@ class Battle:
             self.enemy_team.active().status = Status.SLP
 
     async def make_action(self, websocket):
-        await senders.sendmove(websocket, self.room_id, make_best_action(self), self.turn)
+        action = make_best_action(self)
+        if action[0] == "move":
+            await senders.sendmove(websocket, self.room_id, action[1], self.turn)
+        if action[0] == "switch":
+            await senders.sendswitch(websocket, self.room_id, action[1], self.turn)
 
     async def make_switch(self, websocket):
         await senders.sendswitch(websocket, self.room_id, make_best_switch(self)[0], self.turn)
