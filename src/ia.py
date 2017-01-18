@@ -79,7 +79,7 @@ def make_best_move(battle):
             effi = 100
         if effi > best_move[1]:
             best_move = (i + 1, effi)
-    print("** " + pokemon_moves[best_move[0] - 1]["name"])
+    print("** " + pokemon_moves[best_move[0] - 1]["move"])
     return best_move
 
 
