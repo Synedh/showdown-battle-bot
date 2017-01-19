@@ -1,9 +1,8 @@
 import json
 
-from ia import make_best_action, make_best_switch
-from pokemon import Pokemon, Team, Status
-
-import senders
+from src.ia import make_best_action, make_best_switch, make_best_move
+from src.pokemon import Pokemon, Team, Status
+from src import senders
 
 
 class Battle:
@@ -34,16 +33,19 @@ class Battle:
 
     def update_enemy(self, pkm_name, condition):
         if pkm_name not in self.enemy_team:
-            print("** Update enemy - Not yet in team")
+            # print("** Update enemy - Not yet in team")
             for pkm in self.enemy_team.pokemons:
                 pkm.active = False
             pkm = Pokemon(pkm_name, condition, True)
             pkm.load_unknown()
             self.enemy_team.add(pkm)
         else:
-            print("** Update enemy - Yet in team")
-            # for pkm in self.enemy_team.pokemons:
-            #     pkm.active = False
+            # print("** Update enemy - Yet in team")
+            for pkm in self.enemy_team.pokemons:
+                if pkm.name.lower() == pkm_name.lower():
+                    pkm.active = True
+                else:
+                    pkm.active = False
 
     def update_status_enemy(self, status):
         if status == "tox":
@@ -57,12 +59,15 @@ class Battle:
         elif status == "slp":
             self.enemy_team.active().status = Status.SLP
 
-    async def make_action(self, websocket):
-        action = make_best_action(self)
-        if action[0] == "move":
-            await senders.sendmove(websocket, self.room_id, action[1], self.turn)
-        if action[0] == "switch":
-            await senders.sendswitch(websocket, self.room_id, action[1], self.turn)
+    async def make_move(self, wensocket):
+        await senders.sendmove(wensocket, self.room_id, make_best_move(self)[0], self.turn)
 
     async def make_switch(self, websocket):
         await senders.sendswitch(websocket, self.room_id, make_best_switch(self)[0], self.turn)
+
+    async def make_action(self, websocket):
+        action = make_best_action(self)
+        if action[0] == "move":
+            await self.make_move(websocket)
+        if action[0] == "switch":
+            await self.make_switch(websocket)
