@@ -110,5 +110,5 @@ class Team:
     def __repr__(self):
         res = ""
         for pkm in self.pokemons:
-            res += str(vars(pkm)) + "\n"
+            res += str(pkm.name) + "\n"
         return res
