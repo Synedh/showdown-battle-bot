@@ -87,8 +87,18 @@ class Team:
         if len(self.pokemons) < 6:
             self.pokemons.append(pokemon)
         else:
-            print("Error : There is yet six pokemon in the team.")
+            print("Error : Failed to add " +  pokemon.name + " : there is yet six pokemon in the team :")
+            print(self)
             exit()
+
+    def remove(self, pkm_name):
+        for pkm in self.pokemons:
+            if pkm.name == pkm_name:
+                self.pokemons.remove(pkm)
+                return
+        print("Error : Unable to remove " + pkm_name + " from team :")
+        print(self)
+        exit()
 
     def __contains__(self, pkm_name: str):
         return any(pkm.name == pkm_name for pkm in self.pokemons)
