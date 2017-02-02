@@ -59,9 +59,9 @@ async def stringing(websocket, message):
     if string_tab[1] == "challstr":
         # Si la challstr a  été encoyee, on peut se connecter
         await log_in(websocket, string_tab[2], string_tab[3])
-    elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot" or string_tab[1] == "deinit":
+    # elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot" or string_tab[1] == "deinit":
         # Si on est log, alors on peut commencer les combats
-        await senders.challenge(websocket, "Synedh")
+        # await senders.challenge(websocket, "Synedh")
         # if nb_fights_done < nb_fights:
         #     nb_fights_done += 1
         #     await senders.searching(websocket)

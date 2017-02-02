@@ -41,6 +41,7 @@ class Pokemon:
         self.status = Status.UNK
         self.active = active
         self.types = []
+        self.item = ""
         self.abilities = []
         self.stats = {}
         self.moves = []
@@ -52,11 +53,12 @@ class Pokemon:
         self.stats = infos["baseStats"]
         self.moves = infos["possibleMoves"]
 
-    def load_known(self, abilities, stats, moves):
+    def load_known(self, abilities, item, stats, moves):
         stats == stats
         infos = infos_for_pokemon(self.name)
         self.types = infos["types"]
         self.abilities = abilities
+        self.item = item
         self.stats = infos["baseStats"]
         with open("data/moves.json") as data_file:
             json_file = json.load(data_file)
@@ -87,17 +89,16 @@ class Team:
         if len(self.pokemons) < 6:
             self.pokemons.append(pokemon)
         else:
-            print("Error : Failed to add " +  pokemon.name + " : there is yet six pokemon in the team :")
-            print(self)
+            print("\033[31m" + "Error : Failed to add " + pokemon.name + " : there is yet six pokemon in the team :\n"
+                   + str(self) + "\033[0m")
             exit()
 
     def remove(self, pkm_name):
-        for pkm in self.pokemons:
-            if pkm.name == pkm_name:
-                self.pokemons.remove(pkm)
+        for i, pkm in enumerate(self.pokemons):
+            if pkm.name.lower() == pkm_name:
+                del self.pokemons[i]
                 return
-        print("Error : Unable to remove " + pkm_name + " from team :")
-        print(self)
+        print("\033[31m" + "Error : Unable to remove " + pkm_name + " from team :\n" + str(self) + "\033[0m")
         exit()
 
     def __contains__(self, pkm_name: str):
