@@ -10,12 +10,23 @@ nb_fights_done = 0
 
 
 def check_battle(battle_list, room_id):
+    """
+    Get Battle corresponding to room_id.
+    :param battle_list: Array of Battle.
+    :param room_id: Id of Battle.
+    :return: Battle.
+    """
     for battle in battle_list:
         if battle.room_id == room_id:
             return battle
     return None
 
 async def battle_tag(websocket, message):
+    """
+    Main in fuction. Filter every message sent by server and launch corresponding function.
+    :param websocket: Websocket stream.
+    :param message: Message received from server. Format : room|message1|message2.
+    """
     global battles
     lines = message.splitlines()
     battle = check_battle(battles, lines[0].split('-')[len(lines[0].split('-')) - 1])
@@ -57,6 +68,12 @@ async def battle_tag(websocket, message):
             pass
 
 async def stringing(websocket, message):
+    """
+    First filtering function on received messages.
+    Handle challenge and research actions.
+    :param websocket: Websocket stream.
+    :param message: Message received from server. Format : room|message1|message2.
+    """
     global nb_fights
     global nb_fights_done
     string_tab = message.split('|')
@@ -76,7 +93,8 @@ async def stringing(websocket, message):
                     await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3])
                 else:
                     await senders.sender(websocket, "", "/reject " + string_tab[2].split('\"')[3])
-                    await senders.sender(websocket, "", "/pm " + string_tab[2].split('\"')[3] + ", Sorry, I accept only [Gen 7] Random Battle challenges.")
+                    await senders.sender(websocket, "", "/pm " + string_tab[2].split('\"')[3]
+                                         + ", Sorry, I accept only [Gen 7] Random Battle challenges.")
         except KeyError:
             pass
     elif "battle" in string_tab[0]:
