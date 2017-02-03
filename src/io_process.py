@@ -41,10 +41,14 @@ async def battle_tag(websocket, message):
                 await battle.make_action(websocket)
             elif current[1] == "-status":
                 battle.update_status_enemy(current[3])
+            elif current[1] == "-item" and battle.player_id not in current[2]:
+                battle.set_enemy_item(current[3])
+            elif current[1] == "-enditem" and battle.player_id not in current[2]:
+                battle.set_enemy_item("")
             elif current[1] == "callback" and current[2] == "trapped":
                 await battle.make_move(websocket)
             elif current[1] == "win":
-                await senders.sendmessage(websocket, battles[len(battles) - 1].room_id, "wp")
+                await senders.sendmessage(websocket, battle.room_id, "wp")
                 await senders.leaving(websocket, battle.room_id)
             elif current[1] == "c":
                 # This is a message
@@ -59,12 +63,11 @@ async def stringing(websocket, message):
     if string_tab[1] == "challstr":
         # Si la challstr a  été encoyee, on peut se connecter
         await log_in(websocket, string_tab[2], string_tab[3])
-    # elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot" or string_tab[1] == "deinit":
+    elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
+        # pass
+        await senders.searching(websocket)
         # await senders.challenge(websocket, "Synedh")
-        # if nb_fights_done < nb_fights:
-        #     nb_fights_done += 1
-        #     await senders.searching(websocket)
     elif "updatechallenges" in string_tab[1]:
         # Si quelqu'un envoie un challenge, alors accepter
         try:
