@@ -11,7 +11,7 @@ class Battle:
     Unique for each battle.
     Handle everything concerning it.
     """
-    def __init__(self, room_id):
+    def __init__(self, battletag):
         """
         init Battle method.
         :param room_id: Id of battle.
@@ -20,7 +20,7 @@ class Battle:
         self.enemy_team = Team()
         self.current_pkm = None
         self.turn = 0
-        self.room_id = room_id
+        self.battletag = battletag
         self.player_id = ""
 
     async def req_loader(self, req, websocket):
@@ -100,16 +100,16 @@ class Battle:
         :param wensocket: Websocket stream.
         """
         if "canMegaEvo" in self.current_pkm[0]:
-            await senders.sendmove(wensocket, self.room_id, str(make_best_move(self)[0]) + " mega", self.turn)
+            await senders.sendmove(wensocket, self.battletag, str(make_best_move(self)[0]) + " mega", self.turn)
         else:
-            await senders.sendmove(wensocket, self.room_id, make_best_move(self)[0], self.turn)
+            await senders.sendmove(wensocket, self.battletag, make_best_move(self)[0], self.turn)
 
     async def make_switch(self, websocket):
         """
         Call function to send swich and use the sendswitch sender.
         :param wensocket: Websocket stream.
         """
-        await senders.sendswitch(websocket, self.room_id, make_best_switch(self)[0], self.turn)
+        await senders.sendswitch(websocket, self.battletag, make_best_switch(self)[0], self.turn)
 
     async def make_action(self, websocket):
         """
