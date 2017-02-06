@@ -57,12 +57,12 @@ async def battle_tag(websocket, message):
                 battle.set_enemy_item(current[3])
             elif current[1] == "-enditem" and battle.player_id not in current[2]:
                 battle.set_enemy_item("")
-            elif current[1] == "-buff":
+            elif current[1] == "-boost":
                 if battle.player_id in current[2]:
                     battle.set_bot_buff(current[3], int(current[4]))
                 else:
                     battle.set_enemy_buff(current[3], int(current[4]))
-            elif current[1] == "-unbuff":
+            elif current[1] == "-unboost":
                 if battle.player_id in current[2]:
                     battle.set_bot_buff(current[3], - int(current[4]))
                 else:
