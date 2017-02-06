@@ -6,7 +6,7 @@ from src.io_process import stringing
 
 async def main():
     """
-    Loading function. Launch bot.
+    Loading function. Connect websocket then launch bot.
     """
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
         while True:
