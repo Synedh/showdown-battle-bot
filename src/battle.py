@@ -55,7 +55,7 @@ class Battle:
         :param pkm_name: Pokemon's name
         :param condition: ### TODO ###
         """
-        if "mega" in pkm_name.lower():
+        if "-mega" in pkm_name.lower():
             self.enemy_team.remove(pkm_name.lower().split("-mega")[0])
 
         if pkm_name not in self.enemy_team:

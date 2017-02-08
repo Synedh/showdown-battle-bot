@@ -7,6 +7,11 @@ from src import senders
 battles = []
 nb_fights = 2
 nb_fights_done = 0
+formats = [
+    "gen7randombattle",
+    "gen7monotyperandombattle",
+    "gen7hackmonscup"
+]
 
 
 def check_battle(battle_list, battletag):
@@ -87,6 +92,7 @@ async def stringing(websocket, message):
     """
     global nb_fights
     global nb_fights_done
+    global formats
 
     string_tab = message.split('|')
     if string_tab[1] == "challstr":
@@ -103,12 +109,12 @@ async def stringing(websocket, message):
         # Si quelqu'un envoie un challenge, alors accepter
         try:
             if string_tab[2].split('\"')[3] != "challengeTo":
-                if string_tab[2].split('\"')[5] in ["gen7randombattle", "gen7monotyperandombattle"]:
+                if string_tab[2].split('\"')[5] in formats:
                     await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3])
                 else:
                     await senders.sender(websocket, "", "/reject " + string_tab[2].split('\"')[3])
                     await senders.sender(websocket, "", "/pm " + string_tab[2].split('\"')[3]
-                                         + ", Sorry, I accept only Randomized Metas.")
+                                         + ", Sorry, I accept only solo randomized metas.")
         except KeyError:
             pass
     elif "battle" in string_tab[0]:
