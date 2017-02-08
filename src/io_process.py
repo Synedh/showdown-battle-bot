@@ -5,8 +5,8 @@ from src.battle import Battle
 from src import senders
 
 battles = []
-nb_fights_max = 3
-nb_fights_simu_max = 2
+nb_fights_max = 12
+nb_fights_simu_max = 6
 nb_fights = 0
 
 formats = [
@@ -80,6 +80,12 @@ async def battle_tag(websocket, message):
                 await senders.sendmessage(websocket, battle.battletag, "wp")
                 await senders.leaving(websocket, battle.battletag)
                 battles.remove(battle)
+                if "suchtestbot" in current[2].lower():
+                    with open("log.txt", "a") as file:
+                        file.write("Win\n")
+                else:
+                    with open("log.txt", "a") as file:
+                        file.write("Loose\n")
             elif current[1] == "c":
                 # This is a message
                 pass
@@ -106,9 +112,9 @@ async def stringing(websocket, message):
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
         # pass
+        # await senders.challenge(websocket, "Synedh")
         await senders.searching(websocket)
         nb_fights += 1
-        # await senders.challenge(websocket, "Synedh")
     elif string_tab[1] == "deinit":
         if nb_fights < nb_fights_max:
             await senders.searching(websocket)
