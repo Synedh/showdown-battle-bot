@@ -177,7 +177,7 @@ def make_best_switch(battle):
     try:
         return team.pokemons.index(best_pkm) + 1, effi
     except ValueError:
-        return -1, effi
+        return -1, -1024
 
 
 def make_best_move(battle):

@@ -5,7 +5,7 @@ from src.battle import Battle
 from src import senders
 
 battles = []
-nb_fights_max = 12
+nb_fights_max = 10
 nb_fights_simu_max = 6
 nb_fights = 0
 
@@ -80,12 +80,13 @@ async def battle_tag(websocket, message):
                 await senders.sendmessage(websocket, battle.battletag, "wp")
                 await senders.leaving(websocket, battle.battletag)
                 battles.remove(battle)
-                if "suchtestbot" in current[2].lower():
-                    with open("log.txt", "a") as file:
-                        file.write("Win\n")
-                else:
-                    with open("log.txt", "a") as file:
-                        file.write("Loose\n")
+                with open("log.txt", "r+") as file:
+                    line = file.read().split('/')
+                    file.seek(0)
+                    if "suchtestbot" in current[2].lower():
+                        file.write(str(int(line[0]) + 1) + "/" + line[1] + "/" + str(int(line[2]) + 1))
+                    else:
+                        file.write(line[0] + "/" + str(int(line[1]) + 1) + "/" + str(int(line[2]) + 1))
             elif current[1] == "c":
                 # This is a message
                 pass
@@ -119,7 +120,7 @@ async def stringing(websocket, message):
         if nb_fights < nb_fights_max:
             await senders.searching(websocket)
             nb_fights += 1
-    elif "|gametype|" in message:
+    elif "|inactive|Battle timer is now ON:" in message:
         if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
             await senders.searching(websocket)
             nb_fights += 1
