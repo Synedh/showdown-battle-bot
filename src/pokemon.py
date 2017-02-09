@@ -151,7 +151,7 @@ class Team:
         else:
             print("\033[31m" + "Error : Failed to add " + pokemon.name + " : there is yet six pokemon in the team :\n"
                   + str(self) + "\033[0m")
-            exit()
+            exit(2)
 
     def remove(self, pkm_name):
         """
@@ -164,7 +164,7 @@ class Team:
                     del self.pokemons[i]
                 return
         print("\033[31m" + "Error : Unable to remove " + pkm_name + " from team :\n" + str(self) + "\033[0m")
-        exit()
+        exit(2)
 
     def __contains__(self, pkm_name: str):
         return any(pkm.name == pkm_name for pkm in self.pokemons)

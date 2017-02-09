@@ -124,6 +124,8 @@ async def stringing(websocket, message):
         if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
             await senders.searching(websocket)
             nb_fights += 1
+        if nb_fights == nb_fights_max:
+            exit(0)
     elif "updatechallenges" in string_tab[1]:
         # Si quelqu'un envoie un challenge, alors accepter
         try:
