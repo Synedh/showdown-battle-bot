@@ -51,7 +51,13 @@ async def battle_tag(websocket, message):
                 battle.set_player_id(current[2])
             elif current[1] == "request":
                 # Maj team bot
-                await battle.req_loader(current[2], websocket)
+                if len(current[2]) == 1:
+                    try:
+                        await battle.req_loader(current[3].split('\n')[1], websocket)
+                    except:
+                        print(current[3])
+                else:
+                    await battle.req_loader(current[2], websocket)
             elif current[1] == "switch" and battle.player_id not in current[2]:
                 # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
                 battle.update_enemy(current[3].split(',')[0], current[4])
@@ -120,7 +126,7 @@ async def stringing(websocket, message):
         if nb_fights < nb_fights_max:
             await senders.searching(websocket)
             nb_fights += 1
-        elif nb_fights == nb_fights_max and len(battles) == 0:
+        elif nb_fights >= nb_fights_max and len(battles) == 0:
             exit(0)
     elif "|inactive|Battle timer is now ON:" in message:
         if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
