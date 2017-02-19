@@ -118,20 +118,19 @@ async def stringing(websocket, message):
         await log_in(websocket, string_tab[2], string_tab[3])
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
-        # pass
-        # await senders.challenge(websocket, "Synedh")
-        await senders.searching(websocket)
-        nb_fights += 1
-    elif string_tab[1] == "deinit":
-        if nb_fights < nb_fights_max:
-            await senders.searching(websocket)
-            nb_fights += 1
-        elif nb_fights >= nb_fights_max and len(battles) == 0:
-            exit(0)
-    elif "|inactive|Battle timer is now ON:" in message:
-        if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
-            await senders.searching(websocket)
-            nb_fights += 1
+        pass
+        # await senders.searching(websocket)
+        # nb_fights += 1
+    # elif string_tab[1] == "deinit":
+        # if nb_fights < nb_fights_max:
+            # await senders.searching(websocket)
+            # nb_fights += 1
+        # elif nb_fights >= nb_fights_max and len(battles) == 0:
+            # exit(0)
+    # elif "|inactive|Battle timer is now ON:" in message:
+        # if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
+            # await senders.searching(websocket)
+            # nb_fights += 1
     elif "updatechallenges" in string_tab[1]:
         # Si quelqu'un envoie un challenge, alors accepter
         try:
