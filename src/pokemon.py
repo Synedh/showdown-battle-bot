@@ -50,7 +50,7 @@ class Pokemon:
     Pokemon class.
     Handle everything corresponding to it.
     """
-    def __init__(self, name, condition, active):
+    def __init__(self, name, condition, active, level):
         """
         Init Pokemon method.
         :param name: name of Pokemon.
@@ -61,6 +61,7 @@ class Pokemon:
         self.condition = condition
         self.status = Status.UNK
         self.active = active
+        self.level = int(level)
         self.types = []
         self.item = ""
         self.abilities = []
