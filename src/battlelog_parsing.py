@@ -74,11 +74,15 @@ def minor_actions(battle: Battle, split_line):
     elif split_line[0] == "-immune":
         pass
     elif split_line[0] == "-item":
-        if battle.player_id not in split_line[1]:
-            battle.set_enemy_item(split_line[2])
+        if battle.player_id in split_line[1]:
+            battle.bot_team.active().item = split_line[2].lower.replace(" ", "")
+        else:
+            battle.enemy_team.active().item = split_line[2].lower.replace(" ", "")
     elif split_line[0] == "-enditem":
         if battle.player_id not in split_line[1]:
-            battle.set_enemy_item("")
+            battle.bot_team.active().item = None
+        else:
+            battle.enemy_team.active().item = None
     elif split_line[0] == "-ability":
         pass
     elif split_line[0] == "-endability":
