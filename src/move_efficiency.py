@@ -5,15 +5,15 @@ from src.pokemon import Status
 
 def stat_calculation(base, level, ev):
     """
-    Calculation of stats based on base stat and level.
-    IV and EV are maxed, nature is not used.
+    Calculation of stats based on base stat, level and ev.
+    IVs are maxed, nature is not used.
     Cannot be used for HP calculation.
-    :param base: Integer, base stat of wanted stat
-    :param level:  Integer, level of pokemon
+    :param base: Integer, base stat of wanted stat.
+    :param level:  Integer, level of pokemon.
     :param ev: Integer [0, 252] quantity of ev.
-    :return: Integer, actual stat
+    :return: Integer, actual stat.
     """
-    return int(((2 * base + 31 + ev / 4) * level) / 100 + 5)
+    return int(str(((2 * base + 31 + ev / 4) * level) / 100 + 5).split(".")[0])
 
 
 def efficiency(elem: str, elems: [str]):
@@ -38,6 +38,13 @@ def efficiency(elem: str, elems: [str]):
 
 
 def item_modificator(move, pkm1, pkm2):
+    """
+    Calculation of item modificator
+    :param move: Json object, status move.
+    :param pkm1: Pokemon that will use move.
+    :param pkm2: Pokemon that will receive move.
+    :return: Integer [0; +oo]
+    """
     mod = 1
     if pkm1.item == "lifeorb":
         mod *= 1.3
@@ -56,6 +63,13 @@ def item_modificator(move, pkm1, pkm2):
 
 
 def ability_modificator(move, pkm1, pkm2):
+    """
+    Calculation of ability modificator
+    :param move: Json object, status move.
+    :param pkm1: Pokemon that will use move.
+    :param pkm2: Pokemon that will receive move.
+    :return: Integer [0; +oo]
+    """
     mod = 1
     if "Tinded Lens" in pkm1.abilities and efficiency(move["type"], pkm2.types) < 1:
         mod *= 2
@@ -100,10 +114,17 @@ def damage_calculation(move, pkm1, pkm2):
     item_mod = item_modificator(move, pkm1, pkm2)
     ability_mod = ability_modificator(move, pkm1, pkm2)
     return int(str(int(str(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2).split('.')[0])
-        * stab * effi * burn * item_mod * ability_mod).split('.')[0])
+                   * stab * effi * burn * item_mod * ability_mod).split('.')[0])
 
 
 def effi_boost(move, pkm1, pkm2):
+    """
+    Calculate if boost is worth or not. Currently only working on speed.
+    :param move: Json object, status move.
+    :param pkm1: Pokemon that will use move.
+    :param pkm2: Pokemon that will receive move.
+    :return: Boolean, True if worth, else False
+    """
     value = 0
     tmp = {}
     for i in pkm1.moves:
@@ -118,8 +139,8 @@ def effi_boost(move, pkm1, pkm2):
               and "boosts" in tmp["secondary"]["self"] and "spe" in tmp["secondary"]["self"]["boosts"]):
             value = tmp["secondary"]["self"]["boosts"]["spe"]
         if (pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") < 10
-            and (pkm1.stats["spe"] * pkm1.buff_affect("spe") + value * pkm1.stats["spe"]
-                 - pkm2.stats["spe"] * pkm2.buff_affect("spe") > 10)):
+            and (pkm1.stats["spe"] * pkm1.buff_affect("spe") + value * pkm1.stats["spe"] -
+                 pkm2.stats["spe"] * pkm2.buff_affect("spe") > 10)):
             return True
     except KeyError as e:
         print("\033[31m" + str(e))
@@ -153,7 +174,7 @@ def effi_status(move, pkm1, pkm2, team):
             return 0
         if pkm2.stats["atk"] - pkm2.stats["spa"] > 10:
             return 200
-        return 50
+        return 60
     else:
         for pkm in team.pokemons:  # Sleep clause
             if pkm.status == Status.SLP:
@@ -184,11 +205,4 @@ def effi_move(move, pkm1, pkm2, team):
 
     if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
         return effi_status(move, pkm1, pkm2, team)
-
-    if (move["type"] == "Ground" and ("Levitate" in pkm2.abilities or pkm2.item == "Air Balloon")
-        or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
-            or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
-        return 0
-
-    effi = damage_calculation(move, pkm1, pkm2)
-    return effi
+    return damage_calculation(move, pkm1, pkm2)

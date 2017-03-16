@@ -1,4 +1,4 @@
-from src.move_efficiency import *
+from src.move_efficiency import effi_move, effi_boost
 
 
 def effi_pkm(pkm1, pkm2, team):
