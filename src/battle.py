@@ -30,6 +30,7 @@ class Battle:
         :param websocket: Websocket stream.
         """
         jsonobj = json.loads(req)
+        print(jsonobj)
         self.turn += 1
         objteam = jsonobj['side']['pokemon']
         self.bot_team = Team()
@@ -43,18 +44,12 @@ class Battle:
         elif "active" in jsonobj.keys():
             self.current_pkm = jsonobj["active"]
 
-    def set_player_id(self, player_id):
-        """
-        Set player's id
-        :param player_id: Player's id.
-        """
-        self.player_id = player_id
-
     def update_enemy(self, pkm_name, level, condition):
         """
         On first turn, and each time enemy switch, update enemy team and enemy current pokemon.
         :param pkm_name: Pokemon's name
-        :param condition: ### TODO ###
+        :param level: int, Pokemon's level
+        :param condition: str current_hp/total_hp. /100 if enemy pkm.
         """
         if "-mega" in pkm_name.lower():
             self.enemy_team.remove(pkm_name.lower().split("-mega")[0])
@@ -72,21 +67,25 @@ class Battle:
                 else:
                     pkm.active = False
 
-    def update_status_enemy(self, status):
+    @staticmethod
+    def update_status(pokemon, status: str = ""):
         """
         Update status problem.
+        :param pokemon: Pokemon.
         :param status: String.
         """
         if status == "tox":
-            self.enemy_team.active().status = Status.TOX
+            pokemon.status = Status.TOX
         elif status == "brn":
-            self.enemy_team.active().status = Status.BRN
+            pokemon.status = Status.BRN
         elif status == "par":
-            self.enemy_team.active().status = Status.PAR
+            pokemon.status = Status.PAR
         elif status == "tox":
-            self.enemy_team.active().status = Status.TOX
+            pokemon.status = Status.TOX
         elif status == "slp":
-            self.enemy_team.active().status = Status.SLP
+            pokemon.status = Status.SLP
+        else:
+            pokemon.status = Status.UNK
 
     def set_enemy_item(self, item):
         """
@@ -95,45 +94,19 @@ class Battle:
         """
         self.enemy_team.active().item = item
 
-    def set_bot_buff(self, stat, quantity):
-        modifs = {
-            "-6": 1/4,
-            "-5": 2/7,
-            "-4": 1/3,
-            "-3": 2/5,
-            "-2": 1/2,
-            "-1": 2/3,
-            "0": 1,
-            "1": 3/2,
-            "2": 2,
-            "3": 5/2,
-            "4": 3,
-            "5": 7/2,
-            "6": 4
-        }
-        buff = self.bot_team.active().buff[stat][0] + quantity
-        if buff <= 6 and buff >= -6:
-            self.bot_team.active().buff[stat] = [buff, modifs[str(buff)]]
-
-    def set_enemy_buff(self, stat, quantity):
-        modifs = {
-            "-6": 1/4,
-            "-5": 2/7,
-            "-4": 1/3,
-            "-3": 2/5,
-            "-2": 1/2,
-            "-1": 2/3,
-            "0": 1,
-            "1": 3/2,
-            "2": 2,
-            "3": 5/2,
-            "4": 3,
-            "5": 7/2,
-            "6": 4,
-        }
-        buff = self.enemy_team.active().buff[stat][0] + quantity
-        if buff <= 6 and buff >= -6:
-            self.enemy_team.active().buff[stat] = [buff, modifs[str(buff)]]
+    @staticmethod
+    def set_buff(pokemon, stat, quantity):
+        """
+        Set buff to pokemon
+        :param pokemon: Pokemon
+        :param stat: str (len = 3)
+        :param quantity: int [-6, 6]
+        """
+        modifs = {"-6": 1/4, "-5": 2/7, "-4": 1/3, "-3": 2/5, "-2": 1/2, "-1": 2/3, "0": 1, "1": 3/2, "2": 2, "3": 5/2,
+                  "4": 3, "5": 7/2, "6": 4}
+        buff = pokemon.buff[stat][0] + quantity
+        if -6 <= buff <= 6:
+            pokemon.buff[stat] = [buff, modifs[str(buff)]]
 
     async def make_move(self, wensocket):
         """

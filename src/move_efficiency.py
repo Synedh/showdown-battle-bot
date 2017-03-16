@@ -146,22 +146,22 @@ def effi_move(move, pkm1, pkm2, team):
             or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
         return 0
 
-    effi = damage_calculation(move, pkm1, pkm2)
+    # effi = damage_calculation(move, pkm1, pkm2)
 
-    # effi = efficiency(move["type"], pkm2.types) * move["basePower"]
-    # if move["type"] in pkm1.types:
-    #     effi *= 1.5
-    # if pkm1.item == "lifeorb":
-    #     effi *= 1.3
-    # elif pkm1.item == "choicespecs" or pkm1.item == "choiceband":
-    #     effi *= 1.5
-    # elif pkm1.item == "expertbelt" and efficiency(move["type"], pkm2.types) > 1:
-    #     effi *= 1.2
-    # elif pkm1.item == "thickclub":
-    #     effi *= 2
-    #
-    # if move["category"] == "Special":
-    #     effi *= pkm1.buff_affect("spa") / pkm2.buff_affect("spd")
-    # elif move["category"] == "Physical":
-    #     effi *= pkm1.buff_affect("atk") / pkm2.buff_affect("def")
+    effi = efficiency(move["type"], pkm2.types) * move["basePower"]
+    if move["type"] in pkm1.types:
+        effi *= 1.5
+    if pkm1.item == "lifeorb":
+        effi *= 1.3
+    elif pkm1.item == "choicespecs" or pkm1.item == "choiceband":
+        effi *= 1.5
+    elif pkm1.item == "expertbelt" and efficiency(move["type"], pkm2.types) > 1:
+        effi *= 1.2
+    elif pkm1.item == "thickclub":
+        effi *= 2
+
+    if move["category"] == "Special":
+        effi *= pkm1.buff_affect("spa") / pkm2.buff_affect("spd")
+    elif move["category"] == "Physical":
+        effi *= pkm1.buff_affect("atk") / pkm2.buff_affect("def")
     return effi
