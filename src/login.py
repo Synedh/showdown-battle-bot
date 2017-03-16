@@ -1,9 +1,11 @@
+import sys
 import json
 import requests
-from src.senders import sender
-import sys
+from websocket import WebSocket
 
-async def log_in(websocket, challid, chall):
+from src.senders import sender
+
+async def log_in(websocket: WebSocket, challid: str, chall: str):
     """
     Login in function. Send post request to showdown server.
     :param websocket: Websocket stream

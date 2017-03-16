@@ -15,7 +15,7 @@ class Status(Enum):
     FRZ = 6
 
 
-def infos_for_pokemon(pkm_name):
+def infos_for_pokemon(pkm_name: str) -> dict:
     """
     Filtrate, regroup and translate data from json files.
     :param pkm_name: Pokemon's name
@@ -50,7 +50,7 @@ class Pokemon:
     Pokemon class.
     Handle everything corresponding to it.
     """
-    def __init__(self, name, condition, active, level):
+    def __init__(self, name: str, condition: str, active: bool, level: int):
         """
         Init Pokemon method.
         :param name: name of Pokemon.
@@ -61,7 +61,7 @@ class Pokemon:
         self.condition = condition
         self.status = Status.UNK
         self.active = active
-        self.level = int(level)
+        self.level = level
         self.types = []
         self.item = ""
         self.abilities = []
@@ -87,15 +87,14 @@ class Pokemon:
         self.stats = infos["baseStats"]
         self.moves = infos["possibleMoves"]
 
-    def load_known(self, abilities, item, stats, moves):
+    def load_known(self, abilities: [str], item: str, stats: dict, moves: []):
         """
         Load ever information of pokemon from datafiles, but use only some of them.
-        :param abilities: String. Ability of pokemon.
+        :param abilities: [String]. Ability of pokemon.
         :param item: String. Item of pokemon.
-        :param stats: Dict. {hp, atk, def, spa, spd, spe}
+        :param stats: Dict. {hp, atk, def, spa, spd, spe}. Currently not used
         :param moves: Array. Not used.
         """
-        stats == stats
         infos = infos_for_pokemon(self.name)
         self.types = infos["types"]
         self.abilities = abilities
@@ -106,7 +105,7 @@ class Pokemon:
             for move in moves:
                 self.moves.append(json_file[move.replace('60', '')])
 
-    def buff_affect(self, stat):
+    def buff_affect(self, stat: str) -> int:
         """
         Return buff corresponding to stat
         :param stat: String : ["atk", "def", "spa", "spd", "spe"]
@@ -114,7 +113,7 @@ class Pokemon:
         """
         return self.buff[stat][1]
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return str(vars(self))
 
 
@@ -123,7 +122,7 @@ class Team:
     Team class.
     Contain pokemon list.
     """
-    def __init__(self, *pkms):
+    def __init__(self, *pkms: [Pokemon]):
         """
         init Team method
         :param pkms: Array of pokemons. Can be empty, Cannot contain more than six pokemon.
@@ -132,7 +131,7 @@ class Team:
         for pkm in pkms:
             self.add(pkm)
 
-    def active(self):
+    def active(self) -> Pokemon or None:
         """
         Return active pokemon of Team
         :return: Pokemon
@@ -142,7 +141,7 @@ class Team:
                 return pkm
         return None
 
-    def add(self, pokemon):
+    def add(self, pokemon: Pokemon):
         """
         Add pokemon ton self.pokemons array. Exit and print error message if Team is full (6 pokemons)
         :param pokemon: Pokemon
@@ -154,7 +153,7 @@ class Team:
                   + str(self) + "\033[0m")
             exit(2)
 
-    def remove(self, pkm_name):
+    def remove(self, pkm_name: str):
         """
         Remove pokemon from self.pokemons array. Exit and print error message if pkm_name not present in self.pokemons
         :param pkm_name: Name of pokemon
@@ -167,14 +166,14 @@ class Team:
         print("\033[31m" + "Error : Unable to remove " + pkm_name + " from team :\n" + str(self) + "\033[0m")
         exit(2)
 
-    def __contains__(self, pkm_name: str):
+    def __contains__(self, pkm_name: str) -> bool:
         return any(pkm.name == pkm_name for pkm in self.pokemons)
         # for pkm in self.pokemons:
         #     if pkm.name == pkm_name:
         #         return True
         # return False
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         res = ""
         for pkm in self.pokemons:
             res += str(pkm.name) + "\n"

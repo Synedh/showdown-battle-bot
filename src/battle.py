@@ -1,8 +1,9 @@
 import json
+from websocket import WebSocket
 
+from src import senders
 from src.ia import make_best_action, make_best_switch, make_best_move
 from src.pokemon import Pokemon, Team, Status
-from src import senders
 
 
 class Battle:
@@ -11,7 +12,7 @@ class Battle:
     Unique for each battle.
     Handle everything concerning it.
     """
-    def __init__(self, battletag):
+    def __init__(self, battletag: str):
         """
         init Battle method.
         :param battletag: String, battletag of battle.
@@ -23,7 +24,7 @@ class Battle:
         self.battletag = battletag
         self.player_id = ""
 
-    async def req_loader(self, req, websocket):
+    async def req_loader(self, req: str, websocket: WebSocket):
         """
         Parse and translate json send by server. Reload bot team. Called each turn.
         :param req: json sent by server.
@@ -36,7 +37,7 @@ class Battle:
         self.bot_team = Team()
         for pkm in objteam:
             newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'],
-                             pkm['details'].split(',')[1].split('L')[1])
+                             int(pkm['details'].split(',')[1].split('L')[1]))
             newpkm.load_known([pkm['baseAbility']], pkm["item"], pkm['stats'], pkm['moves'])
             self.bot_team.add(newpkm)
         if "forceSwitch" in jsonobj.keys():
@@ -44,7 +45,7 @@ class Battle:
         elif "active" in jsonobj.keys():
             self.current_pkm = jsonobj["active"]
 
-    def update_enemy(self, pkm_name, level, condition):
+    def update_enemy(self, pkm_name: str, level: int, condition: str):
         """
         On first turn, and each time enemy switch, update enemy team and enemy current pokemon.
         :param pkm_name: Pokemon's name
@@ -68,7 +69,7 @@ class Battle:
                     pkm.active = False
 
     @staticmethod
-    def update_status(pokemon, status: str = ""):
+    def update_status(pokemon: Pokemon, status: str = ""):
         """
         Update status problem.
         :param pokemon: Pokemon.
@@ -87,19 +88,21 @@ class Battle:
         else:
             pokemon.status = Status.UNK
 
-    def set_enemy_item(self, item):
+    @staticmethod
+    def set_item(pokemon: Pokemon, item: str):
         """
         Set enemy item.
+        :param pokemon: Pokemon.
         :param item: Item string.
         """
-        self.enemy_team.active().item = item
+        pokemon.item = item
 
     @staticmethod
-    def set_buff(pokemon, stat, quantity):
+    def set_buff(pokemon: Pokemon, stat: str, quantity: int):
         """
-        Set buff to pokemon
-        :param pokemon: Pokemon
-        :param stat: str (len = 3)
+        Set buff to pokemon.
+        :param pokemon: Pokemon.
+        :param stat: str (len = 3).
         :param quantity: int [-6, 6]
         """
         modifs = {"-6": 1/4, "-5": 2/7, "-4": 1/3, "-3": 2/5, "-2": 1/2, "-1": 2/3, "0": 1, "1": 3/2, "2": 2, "3": 5/2,
@@ -108,24 +111,24 @@ class Battle:
         if -6 <= buff <= 6:
             pokemon.buff[stat] = [buff, modifs[str(buff)]]
 
-    async def make_move(self, wensocket):
+    async def make_move(self, wensocket: WebSocket):
         """
         Call function to send move and use the sendmove sender.
         :param wensocket: Websocket stream.
         """
         if "canMegaEvo" in self.current_pkm[0]:
-            await senders.sendmove(wensocket, self.battletag, str(make_best_move(self)[0]) + " mega", self.turn)
+            await senders.sendmove(wensocket, self.battletag, make_best_move(self)[0] + " mega", self.turn)
         else:
             await senders.sendmove(wensocket, self.battletag, make_best_move(self)[0], self.turn)
 
-    async def make_switch(self, websocket):
+    async def make_switch(self, websocket: WebSocket):
         """
         Call function to send swich and use the sendswitch sender.
         :param websocket: Websocket stream.
         """
         await senders.sendswitch(websocket, self.battletag, make_best_switch(self)[0], self.turn)
 
-    async def make_action(self, websocket):
+    async def make_action(self, websocket: WebSocket):
         """
         Launch best action chooser and call corresponding functions.
         :param websocket: Websocket stream.
