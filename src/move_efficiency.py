@@ -1,4 +1,5 @@
 import json
+from math import floor
 
 from src.pokemon import Status
 
@@ -13,7 +14,7 @@ def stat_calculation(base, level, ev):
     :param ev: Integer [0, 252] quantity of ev.
     :return: Integer, actual stat.
     """
-    return int(str(((2 * base + 31 + ev / 4) * level) / 100 + 5).split(".")[0])
+    return floor(((2 * base + 31 + ev / 4) * level) / 100 + 5)
 
 
 def efficiency(elem: str, elems: [str]):
@@ -43,7 +44,7 @@ def item_modificator(move, pkm1, pkm2):
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
-    :return: Integer [0; +oo]
+    :return: Integer [0; +oo[
     """
     mod = 1
     if pkm1.item == "lifeorb":
@@ -57,7 +58,7 @@ def item_modificator(move, pkm1, pkm2):
     elif pkm1.item == "thickclub" and move["category"] == "Physical":
         mod *= 1.5
 
-    if pkm2.item == "airballoon":
+    if pkm2.item == "airballoon" and move["type"] == "Ground":
         mod = 0
     return mod
 
@@ -68,11 +69,13 @@ def ability_modificator(move, pkm1, pkm2):
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
-    :return: Integer [0; +oo]
+    :return: Integer [0; +oo[
     """
     mod = 1
     if "Tinded Lens" in pkm1.abilities and efficiency(move["type"], pkm2.types) < 1:
         mod *= 2
+    elif "Guts" in pkm1.abilities and pkm1.status != Status.UNK and move["category"] == "Physical":
+        mod *= 1.5
 
     if "Fluffy" in pkm2.abilities:
         if "contact" in move["flags"].keys():
@@ -96,13 +99,28 @@ def ability_modificator(move, pkm1, pkm2):
     return mod
 
 
+def comparator_calculation(power, pkm1, pkm2):
+    """
+    Used to compare damage done by pk1 to comparative values (100, 150, etc.). Because we want exact values,
+    modificators, stab, burn and efficiency are not taken into account.
+    :param power: value to compare
+    :param pkm1: Pokemon that will use move.
+    :param pkm2: Pokemon that will receive move.
+    :return: Integer, damage of comparative value after calculation [0, +oo[
+    """
+    category = ("spa", "spd") if pkm1.stats["atk"] < pkm1.stats["spa"] else ("atk", "def")
+    atk = stat_calculation(pkm1.stats[category[0]], pkm1.level, 252) * pkm1.buff_affect(category[0])
+    defe = stat_calculation(pkm2.stats[category[1]], pkm2.level, 0) * pkm2.buff_affect(category[1])
+    return floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
+
+
 def damage_calculation(move, pkm1, pkm2):
     """
     Damage move calculation.
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
-    :return: Integer, damage of move [0, +oo].
+    :return: Integer, damage of move [0, +oo[.
     """
     category = ("spa", "spd") if move['category'] == "Special" else ("atk", "def")
     atk = stat_calculation(pkm1.stats[category[0]], pkm1.level, 252) * pkm1.buff_affect(category[0])
@@ -110,11 +128,11 @@ def damage_calculation(move, pkm1, pkm2):
     stab = 1.5 if move["type"] in pkm1.types else 1
     power = move["basePower"]
     effi = efficiency(move["type"], pkm2.types)
-    burn = 0.5 if pkm1.status == Status.BRN else 1
+    burn = 0.5 if pkm1.status == Status.BRN and "Guts" not in pkm1.abilities else 1
     item_mod = item_modificator(move, pkm1, pkm2)
     ability_mod = ability_modificator(move, pkm1, pkm2)
-    return int(str(int(str(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2).split('.')[0])
-                   * stab * effi * burn * item_mod * ability_mod).split('.')[0])
+    return floor(floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
+                 * stab * effi * burn * item_mod * ability_mod)
 
 
 def effi_boost(move, pkm1, pkm2):
@@ -127,6 +145,8 @@ def effi_boost(move, pkm1, pkm2):
     """
     value = 0
     tmp = {}
+    pkm1_spe = stat_calculation(pkm1.stats["spe"], pkm1.level, 252)
+    pkm2_spe = stat_calculation(pkm2.stats["spe"], pkm2.level, 252)
     for i in pkm1.moves:
         if i["name"] == move["move"]:
             tmp = i
@@ -138,9 +158,8 @@ def effi_boost(move, pkm1, pkm2):
         elif ("secondary" in tmp and tmp["secondary"] and "self" in tmp["secondary"]
               and "boosts" in tmp["secondary"]["self"] and "spe" in tmp["secondary"]["self"]["boosts"]):
             value = tmp["secondary"]["self"]["boosts"]["spe"]
-        if (pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") < 10
-            and (pkm1.stats["spe"] * pkm1.buff_affect("spe") + value * pkm1.stats["spe"] -
-                 pkm2.stats["spe"] * pkm2.buff_affect("spe") > 10)):
+        if (pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") < 0
+                and (pkm1_spe * pkm1.buff_affect("spe") + value * pkm1_spe - pkm2_spe * pkm2.buff_affect("spe") > 0)):
             return True
     except KeyError as e:
         print("\033[31m" + str(e))
@@ -157,7 +176,7 @@ def effi_status(move, pkm1, pkm2, team):
     :param pkm1: Pokemon that will use move
     :param pkm2: Pokemon that will receive move
     :param team: Team of pkm1
-    :return: Integer, value of move [0, +oo].
+    :return: Integer, value of move [0, +oo[.
     """
     if move["id"] in ["toxic", "poisonpowder"]:
         if "Poison" in pkm2.types or "Steel" in pkm2.types:
