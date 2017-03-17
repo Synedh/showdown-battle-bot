@@ -128,6 +128,13 @@ async def stringing(websocket, message):
                                          + ", Sorry, I accept only solo randomized metas.")
         except KeyError:
             pass
+    elif string_tab[1] == "pm" and "SuchTestBot" not in string_tab[2]:
+        if string_tab[4] == ".info":
+            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Showdown Battle Bot. Active for Random and " +
+                                                                         "Monotype Random Battle.")
+            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Please challenge me to test your skills.")
+        else:
+            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Unknown command, type \".info\" for help.")
 
     if "battle" in string_tab[0]:
         # Si on recoit un message dans une interface de combat
