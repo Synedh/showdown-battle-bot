@@ -14,7 +14,7 @@ def stat_calculation(base, level, ev):
     :param ev: Integer [0, 252] quantity of ev.
     :return: Integer, actual stat.
     """
-    return floor(((2 * base + 31 + ev / 4) * level) / 100 + 5)
+    return floor(((2 * base + 31 + floor(ev / 4)) * level) / 100 + 5)
 
 
 def efficiency(elem: str, elems: [str]):

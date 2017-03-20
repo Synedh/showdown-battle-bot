@@ -17,7 +17,7 @@ formats = [
 ]
 
 
-def check_battle(battle_list, battletag) -> Battle:
+def check_battle(battle_list, battletag) -> Battle or None:
     """
     Get Battle corresponding to room_id.
     :param battle_list: Array of Battle.
@@ -50,6 +50,8 @@ async def battle_tag(websocket, message):
             elif current[1] == "player" and len(current) > 3 and current[3].lower() == "suchtestbot":
                 # Récupérer l'id joueur du bot
                 battle.player_id = current[2]
+                print(current[2])
+                battle.turn += int(current[2].split('p')[1]) - 1
             elif current[1] == "request":
                 # Maj team bot
                 if len(current[2]) == 1:
@@ -104,6 +106,7 @@ async def stringing(websocket, message):
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
         pass
+        # await senders.challenge(websocket, "Synedh")
         # await senders.searching(websocket)
         # nb_fights += 1
     # elif string_tab[1] == "deinit":
