@@ -13,7 +13,10 @@ nb_fights = 0
 formats = [
     "gen7randombattle",
     "gen7monotyperandombattle",
-    "gen7hackmonscup"
+    "gen7hackmonscup",
+    "gen7challengecup1v1",
+    "gen6battlefactory",
+    "gen7bssfactory"
 ]
 
 
@@ -50,17 +53,20 @@ async def battle_tag(websocket, message):
             elif current[1] == "player" and len(current) > 3 and current[3].lower() == "suchtestbot":
                 # Récupérer l'id joueur du bot
                 battle.player_id = current[2]
-                print(current[2])
                 battle.turn += int(current[2].split('p')[1]) - 1
             elif current[1] == "request":
                 # Maj team bot
                 if len(current[2]) == 1:
                     try:
                         await battle.req_loader(current[3].split('\n')[1], websocket)
-                    except:
+                    except KeyError as e:
+                        print(e)
                         print(current[3])
                 else:
                     await battle.req_loader(current[2], websocket)
+            elif current[1] == "teampreview":
+                # Selection d'ordre des pokemons
+                await battle.make_team_order(websocket)
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
@@ -106,19 +112,19 @@ async def stringing(websocket, message):
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
         pass
-        # await senders.challenge(websocket, "Synedh")
-        # await senders.searching(websocket)
-        # nb_fights += 1
+    #     await senders.challenge(websocket, "Synedh")
+    #     await senders.searching(websocket)
+    #     nb_fights += 1
     # elif string_tab[1] == "deinit":
-        # if nb_fights < nb_fights_max:
-            # await senders.searching(websocket)
-            # nb_fights += 1
-        # elif nb_fights >= nb_fights_max and len(battles) == 0:
-            # exit(0)
+    #     if nb_fights < nb_fights_max:
+    #         await senders.searching(websocket)
+    #         nb_fights += 1
+    #     elif nb_fights >= nb_fights_max and len(battles) == 0:
+    #         exit(0)
     # elif "|inactive|Battle timer is now ON:" in message:
-        # if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
-            # await senders.searching(websocket)
-            # nb_fights += 1
+    #     if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
+    #         await senders.searching(websocket)
+    #         nb_fights += 1
     elif "updatechallenges" in string_tab[1]:
         # Si quelqu'un envoie un challenge, alors accepter
         try:
@@ -133,8 +139,9 @@ async def stringing(websocket, message):
             pass
     elif string_tab[1] == "pm" and "SuchTestBot" not in string_tab[2]:
         if string_tab[4] == ".info":
-            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Showdown Battle Bot. Active for Random and " +
-                                                                         "Monotype Random Battle.")
+            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Showdown Battle Bot. Active for Random, " +
+                                                                         " Monotype Random and Challenge Cup 1v1 " +
+                                                                         "Battle.")
             await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Please challenge me to test your skills.")
         else:
             await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Unknown command, type \".info\" for help.")
