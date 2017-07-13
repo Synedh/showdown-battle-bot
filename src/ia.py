@@ -34,31 +34,32 @@ def effi_pkm(battle, pkm1, pkm2, team):
     return effi1 - effi2
 
 
-def make_best_order(battle):
+def make_best_order(battle, form=None):
     """
     Parse battle.bot_team to find the best pokemon based on his damages against enemy team.
     :param battle: Battle object, current battle.
-    :return: Index of pokemon in bot_team (Integer, [-1, 6]).
+    :return: List of pokemons in bot_team sorted by efficiency ([[1, 6], [-oo, +oo]]).
     """
     team = battle.bot_team
     enemy_team = battle.enemy_team
     # print(team)
-    best_pkm = None
-    effi = -1024
+    ordered_team = []
     for i, pokemon in enumerate(team.pokemons):
-        av_dmg = 0
+        average_efficiency = 0
         for enemy_pkm in enemy_team.pokemons:
-            dmg_pkm = -1024
-            for move in pokemon.moves:
-                dmg = effi_move(battle, move, pokemon, enemy_pkm, team)
-                if dmg_pkm < dmg:
-                    dmg_pkm = dmg
-            av_dmg += dmg_pkm
-        av_dmg /= 6
-        if effi < av_dmg:
-            effi = av_dmg
-            best_pkm = str(i + 1)
-    return best_pkm
+            pkm_efficiency = -1024
+            if form == 'gen7challengecup1v1':
+                for move in pokemon.moves:
+                    dmg = effi_move(battle, move, pokemon, enemy_pkm, team)
+                    if pkm_efficiency < dmg:
+                        pkm_efficiency = dmg
+            elif form in ["gen6battlefactory", "gen7bssfactory"]:
+                pkm_efficiency = effi_pkm(battle, pokemon, enemy_pkm, enemy_team)
+            average_efficiency += pkm_efficiency
+        average_efficiency /= 6
+        ordered_team.append([i + 1, average_efficiency])
+        ordered_team.sort(key=lambda x: x[1], reverse=True)
+    return ordered_team
 
 
 def make_best_switch(battle):
@@ -109,6 +110,7 @@ def make_best_move(battle):
     for i, move in enumerate(pokemon_moves):  # Boosts handling
         if effi_boost(move, pokemon, enemy_pkm):
             best_move = (i + 1, best_move[1] + 1)
+    print(best_move)
     return best_move
 
 

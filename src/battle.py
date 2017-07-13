@@ -123,15 +123,7 @@ class Battle:
         Call function to correctly choose the first pokemon to send.
         :param websocket: Websocket stream.
         """
-        if self.battletag.split('-')[1] == "gen7challengecup1v1":
-            order = make_best_order(self)
-            for i in range(1, 7):
-                if str(i) not in order:
-                    order += str(i)
-        elif self.battletag.split('-')[1] in ["gen6battlefactory", "gen7bssfactory"]:
-            order = make_best_order(self)
-        else:
-            order = "1234567"
+        order = "".join([str(x[0]) for x in make_best_order(self, self.battletag.split('-')[1])])
         await senders.sendmessage(websocket, self.battletag, "/team " + order + "|" + str(self.turn))
 
     async def make_move(self, websocket):
