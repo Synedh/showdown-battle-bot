@@ -1,5 +1,3 @@
-import random
-
 from src.move_efficiency import effi_move, effi_boost, comparator_calculation, stat_calculation
 
 
@@ -38,6 +36,7 @@ def make_best_order(battle, form=None):
     """
     Parse battle.bot_team to find the best pokemon based on his damages against enemy team.
     :param battle: Battle object, current battle.
+    :form: Battle format.
     :return: List of pokemons in bot_team sorted by efficiency ([[1, 6], [-oo, +oo]]).
     """
     team = battle.bot_team
@@ -99,6 +98,8 @@ def make_best_move(battle):
         for move in pokemon.moves:
             if move["name"] == pokemon_moves[0]["move"]:
                 return 1, effi_move(battle, move, pokemon, enemy_pkm, battle.enemy_team)
+        else:
+            return 1, 0
 
     for i, move in enumerate(pokemon.moves):  # Classical parse
         if "disabled" in pokemon_moves[i].keys() and pokemon_moves[i]["disabled"]:
@@ -110,7 +111,6 @@ def make_best_move(battle):
     for i, move in enumerate(pokemon_moves):  # Boosts handling
         if effi_boost(move, pokemon, enemy_pkm):
             best_move = (i + 1, best_move[1] + 1)
-    print(best_move)
     return best_move
 
 
