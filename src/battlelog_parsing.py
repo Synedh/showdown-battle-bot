@@ -1,13 +1,6 @@
 from src.battle import Battle
 
 
-# def pkm_data(battle: Battle, pokemon_str):
-#     if battle.player_id in pokemon_str.split(':')[0]:
-#         return battle.bot_team.active()
-#     else:
-#         return battle.enemy_team.active()
-
-
 def major_actions(battle: Battle, split_line):
     if split_line[0] == "move":
         pass

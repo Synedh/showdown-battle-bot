@@ -126,27 +126,31 @@ class Battle:
         order = "".join([str(x[0]) for x in make_best_order(self, self.battletag.split('-')[1])])
         await senders.sendmessage(websocket, self.battletag, "/team " + order + "|" + str(self.turn))
 
-    async def make_move(self, websocket):
+    async def make_move(self, websocket, best_move=None):
         """
         Call function to send move and use the sendmove sender.
         :param websocket: Websocket stream.
+        :param best_move: [int, int] : [id of best move, value].
         """
-        best_move = make_best_move(self)
-        print(best_move[1])
+        if not best_move:
+            best_move = make_best_move(self)
         if best_move[1] < 20:
             print("Best move power < 20. Move list : "
                   + ", ".join([move["move"] for move in self.current_pkm[0]['moves']]) + ".")
         if "canMegaEvo" in self.current_pkm[0]:
-            await senders.sendmove(websocket, self.battletag, str(make_best_move(self)[0]) + " mega", self.turn)
+            await senders.sendmove(websocket, self.battletag, str(best_move[0]) + " mega", self.turn)
         else:
-            await senders.sendmove(websocket, self.battletag, make_best_move(self)[0], self.turn)
+            await senders.sendmove(websocket, self.battletag, best_move[0], self.turn)
 
-    async def make_switch(self, websocket):
+    async def make_switch(self, websocket, best_switch=None):
         """
         Call function to send swich and use the sendswitch sender.
         :param websocket: Websocket stream.
+        :param best_switch: int, id of pokemon to switch.
         """
-        await senders.sendswitch(websocket, self.battletag, make_best_switch(self)[0], self.turn)
+        if not best_switch:
+            best_switch = make_best_switch(self)[0]
+        await senders.sendswitch(websocket, self.battletag, best_switch, self.turn)
 
     async def make_action(self, websocket):
         """
@@ -155,6 +159,6 @@ class Battle:
         """
         action = make_best_action(self)
         if action[0] == "move":
-            await self.make_move(websocket)
+            await self.make_move(websocket, action[1:])
         if action[0] == "switch":
-            await self.make_switch(websocket)
+            await self.make_switch(websocket, action[1])
