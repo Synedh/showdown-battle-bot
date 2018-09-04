@@ -59,12 +59,10 @@ async def battle_tag(websocket, message, usage):
                 if current[2] == '':
                     continue;
                 # Maj team bot
-                # print(current)
                 if len(current[2]) == 1:
                     try:
                         await battle.req_loader(current[3].split('\n')[1], websocket)
                     except KeyError as e:
-                        print('ERROR RAISED IN KEYERROR!')
                         print(e)
                         print(current[3])
                 else:
@@ -119,7 +117,7 @@ async def stringing(websocket, message, usage=0):
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Once we are connected.
         if usage == 1:
-            await senders.challenge(websocket, "frodosam", formats[0])
+            await senders.challenge(websocket, "Synedh", formats[0])
         if usage == 2:
             await senders.searching(websocket, formats[0])
             nb_fights += 1
