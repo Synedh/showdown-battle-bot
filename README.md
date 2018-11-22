@@ -1,8 +1,10 @@
 # showdown-battle-bot
 
-Socket battle bot for the pokemon simulator [Pokemon Showdown](http://pokemonshowdown.com). Developped in Python 3.5+
+Socket battle bot for the pokemon simulator [Pokemon Showdown](http://pokemonshowdown.com). Developped in Python 3.5.X
 
 ### Requirements
+- python 3.5.X
+- requests
 - asyncio
 - websockets
 
@@ -18,15 +20,12 @@ Socket battle bot for the pokemon simulator [Pokemon Showdown](http://pokemonsho
 
 ### Installation
 ```
-pip3 install asyncio
-pip3 install websockets
-chmod +x main
+pip3 install -r requirements.txt
 ./main
 ```
-(python 3.5+ required)
 
 ### How does that works
-The bot works in three parts : I/O process, game engine and IA.
+The bot works in three parts : I/O process, game engine and AI.
   
 I/O process is about sending and receiving datas from Showdown's servers.  
 Showdown use websockets to send datas, therefor I use them too. 
@@ -43,8 +42,8 @@ For each battle, an object is created and filled with informations sent by Showd
 For the unkowns informations (enemy's team), moves are filled thanks to a file take from source code where moves and pokemons are listed.
 See [data](data/) forlder for more informations.
 
-Bot's brain, the IA.  
-At the moment I write theses lines, the IA is static. It means if you put the bot in the same situation X times, it will act the same way X times.
+Bot's brain, the AI.  
+At the moment I write theses lines, the AI is static. It means if you put the bot in the same situation X times, it will act the same way X times.
 On each turn, a player (here, the bot) has the choice between switch and use a move.
 To choose the move, the bot "just" calculate the efficiency of each move based on base power, stats, typechart, items and abilities.
 To choose a pokemon to switch, the bot will parse every of its pokemons and calculate its efficiency based on speed and moves power (same calculus as the above one).

@@ -1,7 +1,7 @@
 import re
 import json
 
-from src.ia import make_best_action, make_best_switch, make_best_move, make_best_order
+from src.ai import make_best_action, make_best_switch, make_best_move, make_best_order
 from src.pokemon import Pokemon, Team, Status
 from src import senders
 
