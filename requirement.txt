@@ -4,4 +4,4 @@ chardet==3.0.4
 idna==2.7
 requests==2.20.1
 urllib3==1.24.1
-websockets==7.0
+websockets==9.1
