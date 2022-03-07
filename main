@@ -1,19 +1,22 @@
-#!/usr/bin/env python3.6
+#!/usr/bin/env python3
 
 import asyncio
 import websockets
+from datetime import datetime
 
-from src.io_process import stringing
+from src.senders import Sender
+from src.io_process import stringing, Usage
 
 async def main():
     """
     Loading function. Connect websocket then launch bot.
     """
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
+        Sender(websocket)
         while True:
             message = await websocket.recv()
-            print("<< {}".format(message))
-            await stringing(websocket, message)
+            print(f'[{datetime.now().replace(microsecond=0).isoformat()}] << {message}')
+            await stringing(message, Usage.STANDBY)
 
 
 def test():
@@ -37,5 +40,11 @@ def test():
 
 
 if __name__ == "__main__":
-    asyncio.get_event_loop().run_until_complete(main())
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(main())
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
     # test()
