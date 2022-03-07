@@ -12,7 +12,7 @@ class Battle:
     Unique for each battle.
     Handle everything concerning it.
     """
-    def __init__(self, battletag):
+    def __init__(self, battletag: str):
         """
         init Battle method.
         :param battletag: String, battletag of battle.
@@ -29,11 +29,10 @@ class Battle:
             "reflect": False
         }
 
-    async def req_loader(self, req):
+    async def req_loader(self, req: str):
         """
         Parse and translate json send by server. Reload bot team. Called each turn.
         :param req: json sent by server.
-        :param websocket: Websocket stream.
         """
         jsonobj = json.loads(req)
         self.turn += 2
@@ -41,25 +40,27 @@ class Battle:
         self.bot_team = Team()
         for pkm in objteam:
             try:
-                newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'],
-                                 pkm['details'].split(',')[1].split('L')[1]
-                                 if len(pkm['details']) > 1 and 'L' in pkm['details'] else 100)
+                newpkm = Pokemon(
+                    pkm['details'].split(',')[0],
+                    pkm['condition'],
+                    pkm['active'],
+                    pkm['details'].split(',')[1].split('L')[1] if len(pkm['details']) > 1 and 'L' in pkm['details'] else 100
+                )
                 newpkm.load_known([pkm['baseAbility']], pkm["item"], pkm['stats'], pkm['moves'])
                 self.bot_team.add(newpkm)
-            except IndexError as e:
-                print("\033[31m" + "IndexError: " + str(e))
-                print(pkm + "\033[0m")
+            except IndexError as error:
+                print(f'\033[31mIndexError: {error}\n{pkm}\033[0m')
                 exit(2)
         if "forceSwitch" in jsonobj.keys():
             await self.make_switch()
         elif "active" in jsonobj.keys():
             self.current_pkm = jsonobj["active"]
 
-    def update_enemy(self, pkm_name, level, condition):
+    def update_enemy(self, pkm_name: str, level: str, condition: str):
         """
         On first turn, and each time enemy switch, update enemy team and enemy current pokemon.
         :param pkm_name: Pokemon's name
-        :param level: int, Pokemon's level
+        :param level: stringified int, Pokemon's level
         :param condition: str current_hp/total_hp. /100 if enemy pkm.
         """
         if "-mega" in pkm_name.lower():
@@ -92,33 +93,34 @@ class Battle:
         :param pokemon: Pokemon.
         :param status: String.
         """
-        if status == "tox":
-            pokemon.status = Status.TOX
-        elif status == "brn":
-            pokemon.status = Status.BRN
-        elif status == "par":
-            pokemon.status = Status.PAR
-        elif status == "tox":
-            pokemon.status = Status.TOX
-        elif status == "slp":
-            pokemon.status = Status.SLP
-        else:
-            pokemon.status = Status.UNK
+        match status:
+            case "tox":
+                pokemon.status = Status.TOX
+            case "brn":
+                pokemon.status = Status.BRN
+            case "par":
+                pokemon.status = Status.PAR
+            case "tox":
+                pokemon.status = Status.TOX
+            case "slp":
+                pokemon.status = Status.SLP
+            case _:
+                pokemon.status = Status.UNK
 
     @staticmethod
-    def set_buff(pokemon, stat, quantity):
+    def set_buff(pokemon, stat: str, quantity: int):
         """
         Set buff to pokemon
         :param pokemon: Pokemon
         :param stat: str (len = 3)
         :param quantity: int [-6, 6]
         """
-        modifs = {"-6": 1/4, "-5": 2/7, "-4": 1/3, "-3": 2/5, "-2": 1/2, "-1": 2/3, "0": 1, "1": 3/2, "2": 2, "3": 5/2,
-                  "4": 3, "5": 7/2, "6": 4}
+        modifs = {"-6": 1/4, "-5": 2/7, "-4": 1/3, "-3": 2/5, "-2": 1/2, "-1": 2/3, "0": 1,
+                  "1": 3/2, "2": 2, "3": 5/2, "4": 3, "5": 7/2, "6": 4}
         buff = pokemon.buff[stat][0] + quantity
         if -6 <= buff <= 6:
             pokemon.buff[stat] = [buff, modifs[str(buff)]]
-    
+
     async def make_team_order(self):
         """
         Call function to correctly choose the first pokemon to send.
@@ -127,7 +129,7 @@ class Battle:
         order = "".join([str(x[0]) for x in make_best_order(self, self.battletag.split('-')[1])])
         await self.sender.send(self.battletag, "/team " + order + "|" + str(self.turn))
 
-    async def make_move(self, best_move=None):
+    async def make_move(self, best_move: list[int] = None):
         """
         Call function to send move and use the sendmove sender.
         :param websocket: Websocket stream.

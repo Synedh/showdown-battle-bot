@@ -2,6 +2,9 @@ from datetime import datetime
 
 
 class Sender():
+    """
+    Class helper for sending showdown messages.
+    """
 
     def __new__(cls, _=None):
         if not hasattr(cls, 'instance'):
@@ -12,9 +15,9 @@ class Sender():
         if not hasattr(self, 'websocket'):
             self.websocket = websocket
         if not self.websocket:
-            raise ValueError('"websocket" needs to be initialised at least one time.')
+            raise ValueError('Field "websocket" needs to be initialised at least one time.')
 
-    async def send(self, room, *messages):
+    async def send(self, room: str, *messages: str|int):
         """
         Default websocket sender. Format message, log and send websocket.
         :param room: Room name.
@@ -24,22 +27,22 @@ class Sender():
         print(f'[{datetime.now().replace(microsecond=0).isoformat()}] >> {string}')
         await self.websocket.send(string)
 
-    async def searching(self, format):
+    async def searching(self, battle_format: str):
         """
         Battle search, call sender function.
-        :param format: String, battle formatat.
+        :param battle_format: String, battle format.
         """
-        await self.send('', f'/search {format}')
+        await self.send('', f'/search {battle_format}')
 
-    async def challenge(self, player, format):
+    async def challenge(self, player: str, battle_format: str):
         """
         Send challenge to player in format, call sender function.
         :param player: Player name.
-        :param format: String, battle format.
+        :param battle_format: String, battle format.
         """
-        await self.send('', f'/challenge {player}, {format}', format)
+        await self.send('', f'/challenge {player}, {battle_format}', battle_format)
 
-    async def sendmove(self, battletag, move, turn):
+    async def sendmove(self, battletag: str, move: int, turn: int):
         """
         Battle move choice, call sender function.
         :param battletag: Battletag string.
@@ -48,7 +51,7 @@ class Sender():
         """
         await self.send(battletag, f'/choose move {move}', turn)
 
-    async def sendswitch(self, battletag, pokemon, turn):
+    async def sendswitch(self, battletag: str, pokemon: int, turn: int):
         """
         Battle switch choice, call sender function.
         :param battletag: Battletag string.
@@ -57,14 +60,14 @@ class Sender():
         """
         await self.send(battletag, f'/choose switch {pokemon}', turn)
 
-    async def leaving(self, battletag):
+    async def leaving(self, battletag: str):
         """
         Leaving room, call sender function.
         :param battletag: Battletag string.
         """
         await self.send('', f'/leave {battletag}')
 
-    async def forfeit(self, battletag):
+    async def forfeit(self, battletag: str):
         """
         Forfeit and leave battle, call sender function.
         :param battletag: Battletag string.

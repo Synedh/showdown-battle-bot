@@ -1,7 +1,8 @@
 import json
 from math import floor
 
-from src.pokemon import Status
+from src.battle import Battle
+from src.pokemon import Pokemon, Status, Team
 
 
 def stat_calculation(base, level, ev):
@@ -17,7 +18,7 @@ def stat_calculation(base, level, ev):
     return floor(((2 * base + 31 + floor(ev / 4)) * level) / 100 + 5)
 
 
-def efficiency(elem: str, elems: [str]):
+def efficiency(elem: str, elems: list[str]) -> int:
     """
     Type chart calculator.
     :param elem: Elem of move.
@@ -25,7 +26,7 @@ def efficiency(elem: str, elems: [str]):
     :return: Integer, efficiency multiplication.
     """
     res = 1
-    with open('data/typechart.json') as data_file:
+    with open('data/typechart.json', encoding='utf8') as data_file:
         typechart = json.load(data_file)
         for target_elem in elems:
             tmp = typechart[target_elem]['damageTaken'][elem]
@@ -38,12 +39,12 @@ def efficiency(elem: str, elems: [str]):
     return res
 
 
-def side_modificator(battle, move):
+def side_modificator(battle: Battle, move: dict) -> int|float:
     """
     Side modificators, like screens, entry hazards, etc.
     :param battle: Battle instance
     :param move: Json object, move.
-    :return: Integer [0; +oo]
+    :return: Float or Integer [0; +oo]
     """
     if (move["category"] == "Special" and battle.screens["lightscreen"]
         or move["category"] == "Physical" and battle.screens["reflect"]):
@@ -51,13 +52,13 @@ def side_modificator(battle, move):
     return 1
 
 
-def item_modificator(move, pkm1, pkm2):
+def item_modificator(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> float|int:
     """
     Calculation of item modificator
     :param move: Json object, move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
-    :return: Integer [0; +oo[
+    :return: Float or Integer [0; +oo[
     """
     mod = 1
     if pkm1.item == "lifeorb":
@@ -76,13 +77,13 @@ def item_modificator(move, pkm1, pkm2):
     return mod
 
 
-def ability_modificator(move, pkm1, pkm2):
+def ability_modificator(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> float|int:
     """
     Calculation of ability modificator
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
-    :return: Integer [0; +oo[
+    :return: Float or Integer [0; +oo[
     """
     mod = 1
     if "Tinded Lens" in pkm1.abilities and efficiency(move["type"], pkm2.types) < 1:
@@ -112,10 +113,11 @@ def ability_modificator(move, pkm1, pkm2):
     return mod
 
 
-def comparator_calculation(power, pkm1, pkm2):
+def comparator_calculation(power: float|int, pkm1: Pokemon, pkm2: Pokemon) -> int:
     """
-    Used to compare damage done by pk1 to comparative values (100, 150, etc.). Because we want exact values,
-    modificators, stab, burn and efficiency are not taken into account.
+    Used to compare damage done by pk1 to comparative values (100, 150, etc.).
+    Because we want exact values, modificators, stab, burn and efficiency are
+    not taken into account.
     :param power: value to compare
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
@@ -127,7 +129,7 @@ def comparator_calculation(power, pkm1, pkm2):
     return floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
 
 
-def damage_calculation(battle, move, pkm1, pkm2):
+def damage_calculation(battle: Battle, move: dict, pkm1: Pokemon, pkm2: Pokemon) -> int:
     """
     Damage move calculation.
     :param battle: Battle, used for side modificator.
@@ -150,7 +152,7 @@ def damage_calculation(battle, move, pkm1, pkm2):
                  * stab * effi * burn * item_mod * ability_mod * side_mod)
 
 
-def effi_boost(move, pkm1, pkm2):
+def effi_boost(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> bool:
     """
     Calculate if boost is worth or not. Currently only working on speed.
     :param move: Json object, status move.
@@ -170,19 +172,20 @@ def effi_boost(move, pkm1, pkm2):
             value = tmp["boosts"]["spe"]
         elif "self" in tmp and "boosts" in tmp["self"] and "spe" in tmp["self"]["boosts"]:
             value = tmp["self"]["boosts"]["spe"]
-        elif ("secondary" in tmp and tmp["secondary"] and "self" in tmp["secondary"]
-              and "boosts" in tmp["secondary"]["self"] and "spe" in tmp["secondary"]["self"]["boosts"]):
+        elif ("secondary" in tmp and tmp["secondary"]
+                and "self" in tmp["secondary"]
+                and "boosts" in tmp["secondary"]["self"]
+                and "spe" in tmp["secondary"]["self"]["boosts"]):
             value = tmp["secondary"]["self"]["boosts"]["spe"]
-        if (pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") < 0
-                and (pkm1_spe * pkm1.buff_affect("spe") + value * pkm1_spe - pkm2_spe * pkm2.buff_affect("spe") > 0)):
-            return True
-    except KeyError as e:
-        print("\033[31m" + str(e) + "\n" + str(tmp) + "\033[0m")
+        return (pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") < 0
+            and (pkm1_spe * pkm1.buff_affect("spe") + value * pkm1_spe - pkm2_spe * pkm2.buff_affect("spe") > 0))
+    except KeyError as error:
+        print("\033[31m" + str(error) + "\n" + str(tmp) + "\033[0m")
         exit()
     return False
 
 
-def effi_status(move, pkm1, pkm2, team):
+def effi_status(move: dict, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     """
     Efficiency status calculator.
     Give arbitrary value to status move depending on types, abilities and stats.
@@ -219,7 +222,7 @@ def effi_status(move, pkm1, pkm2, team):
         return 200
 
 
-def effi_move(battle, move, pkm1, pkm2, team):
+def effi_move(battle: Battle, move: dict, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     """
     Calculate efficiency of move based on previous functions, type, base damage and item.
     :param battle: Battle instance
