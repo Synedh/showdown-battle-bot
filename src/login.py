@@ -15,7 +15,6 @@ OWNER = config['bot']['owner']
 async def log_in(challid: str, chall: str):
     """
     Login in function. Send post request to showdown server.
-    :param websocket: Websocket stream
     :param challid: first part of login challstr sent by server
     :param chall: second part of login challstr sent by server
     """

@@ -17,7 +17,7 @@ class Sender():
         if not self.websocket:
             raise ValueError('Field "websocket" needs to be initialised at least one time.')
 
-    async def send(self, room: str, *messages: str|int):
+    async def send(self, room: str, *messages: str):
         """
         Default websocket sender. Format message, log and send websocket.
         :param room: Room name.
@@ -40,7 +40,7 @@ class Sender():
         :param player: Player name.
         :param battle_format: String, battle format.
         """
-        await self.send('', f'/challenge {player}, {battle_format}', battle_format)
+        await self.send('', f'/challenge {player}, {battle_format}')
 
     async def sendmove(self, battletag: str, move: int, turn: int):
         """
@@ -49,7 +49,7 @@ class Sender():
         :param move: Move id (1, 2, 3, 4).
         :param turn: Battle turn (1, 2, ...). Different from the one sent by server.
         """
-        await self.send(battletag, f'/choose move {move}', turn)
+        await self.send(battletag, f'/choose move {move}', str(turn))
 
     async def sendswitch(self, battletag: str, pokemon: int, turn: int):
         """
@@ -58,7 +58,7 @@ class Sender():
         :param pokemon: Pokemon id (1, 2, 3, 4, 5, 6).
         :param turn: Battle turn (1, 2, ...). Different from the one sent by server.
         """
-        await self.send(battletag, f'/choose switch {pokemon}', turn)
+        await self.send(battletag, f'/choose switch {pokemon}', str(turn))
 
     async def leaving(self, battletag: str):
         """

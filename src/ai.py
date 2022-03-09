@@ -1,9 +1,8 @@
-from src.battle import Battle
-from src.pokemon import Pokemon, Team
-from src.move_efficiency import effi_move, effi_boost, comparator_calculation, stat_calculation
+from src.pokemon import Stats, Pokemon, Team
+from src.move_efficiency import effi_move, effi_boost, comparator_calculation
 
 
-def effi_pkm(battle: Battle, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
+def effi_pkm(battle, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     """
     Efficiency of pokemon against other.
     Based on move efficiency functions.
@@ -15,26 +14,19 @@ def effi_pkm(battle: Battle, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     :param team: Team of pkm1.
     :return: Integer, can be negative.
     """
-    effi1 = 0
-    effi2 = 0
-    pkm1_spe = stat_calculation(pkm1.stats["spe"], pkm1.level, 252) * pkm1.buff_affect("spe")
-    pkm2_spe = stat_calculation(pkm2.stats["spe"], pkm2.level, 252) * pkm2.buff_affect("spe")
-    for move in pkm1.moves:
-        dmg = effi_move(battle, move, pkm1, pkm2, team)
-        if effi1 < dmg:
-            effi1 = dmg
+    pkm1_spe = pkm1.compute_stat(Stats.SPE)
+    pkm2_spe = pkm2.compute_stat(Stats.SPE)
+
+    effi1 = max([effi_move(battle, move, pkm1, pkm2, team) for move in pkm1.moves])
     if effi1 >= comparator_calculation(150, pkm1, pkm2) and pkm1_spe > pkm2_spe:
         return effi1
-    for move in pkm2.moves:
-        dmg = effi_move(battle, move, pkm2, pkm1, team)
-        if effi2 < dmg:
-            effi2 = dmg
+    effi2 = max([effi_move(battle, move, pkm2, pkm1, team) for move in pkm2.moves])
     if effi2 >= comparator_calculation(150, pkm1, pkm2) and pkm2_spe > pkm1_spe:
         return -effi2
     return effi1 - effi2
 
 
-def make_best_order(battle: Battle, form: str = None) -> list[Pokemon]:
+def make_best_order(battle, form: str = None) -> list[Pokemon]:
     """
     Parse battle.bot_team to find the best pokemon based on his damages against enemy team.
     :param battle: Battle object, current battle.
@@ -48,12 +40,12 @@ def make_best_order(battle: Battle, form: str = None) -> list[Pokemon]:
         average_efficiency = 0
         for enemy_pkm in enemy_team.pokemons:
             pkm_efficiency = -1024
-            if form == 'gen7challengecup1v1':
+            if form == 'gen8challengecup1v1':
                 for move in pokemon.moves:
                     dmg = effi_move(battle, move, pokemon, enemy_pkm, team)
                     if pkm_efficiency < dmg:
                         pkm_efficiency = dmg
-            elif form in ["gen6battlefactory", "gen7bssfactory"]:
+            elif form in ["gen6battlefactory", "gen8bssfactory"]:
                 pkm_efficiency = effi_pkm(battle, pokemon, enemy_pkm, enemy_team)
             average_efficiency += pkm_efficiency
         average_efficiency /= 6
@@ -62,7 +54,7 @@ def make_best_order(battle: Battle, form: str = None) -> list[Pokemon]:
     return ordered_team
 
 
-def make_best_switch(battle: Battle) -> tuple[int]:
+def make_best_switch(battle) -> tuple[int, int]:
     """
     Parse battle.bot_team to find the best pokemon based on his efficiency against current enemy pokemon.
     :param battle: Battle object, current battle.
@@ -84,43 +76,46 @@ def make_best_switch(battle: Battle) -> tuple[int]:
         return -1, -1024
 
 
-def make_best_move(battle: Battle) -> tuple[int]:
+def make_best_move(battle) -> tuple[int,int]:
     """
     Parse attacks of current pokemon and send the most efficient based on previous function
     :param battle: Battle object, current battle.
     :return: (Index of move in pokemon (Integer, [-1, 4]), efficiency (Integer, [0, +oo[))
     """
-    pokemon_moves = battle.current_pkm[0]["moves"]
+    pokemon_moves = battle.current_pkm[0]['moves']
     pokemon = battle.bot_team.active()
     enemy_pkm = battle.enemy_team.active()
-    best_move = (None, -1)
+    best_move = -1, -1
 
     if len(pokemon_moves) == 1:  # Case Outrage, Mania, Phantom Force, etc.
         for move in pokemon.moves:
-            if move["name"] == pokemon_moves[0]["move"]:
+            if move['name'] == pokemon_moves[0]['move']:
                 return 1, effi_move(battle, move, pokemon, enemy_pkm, battle.enemy_team)
         return 1, 0
 
     for i, move in enumerate(pokemon.moves):  # Classical parse
-        if "disabled" in pokemon_moves[i].keys() and pokemon_moves[i]["disabled"]:
+        if next((m for m in pokemon_moves if m['move'] == move['name']), {}).get('disabled'):
+            print(move['name'], 'disabled')
             continue
         effi = effi_move(battle, move, pokemon, enemy_pkm, battle.enemy_team)
         if effi > best_move[1]:
             best_move = (i + 1, effi)
+        print(move['name'], effi)
 
     for i, move in enumerate(pokemon_moves):  # Boosts handling
         if effi_boost(move, pokemon, enemy_pkm):
             best_move = (i + 1, best_move[1] + 1)
+    print(pokemon.moves[best_move[0] - 1]['name'], best_move[1])
     return best_move
 
 
-def make_best_action(battle: Battle) -> tuple[str, int]:
+def make_best_action(battle) -> tuple[str, int]:
     """
     Global function to choose best action to do each turn.
     Select best action of bot and enemy pokemon, then best pokemon to switch. And finally, chose if it worth or not to
     switch.
     :param battle: Battle object, current battle.
-    :return: (Index of move in pokemon (["move"|"switch"], Integer, [-1, 6]))
+    :return: (Index of move in pokemon (["move"|"switch"], [-1, 6]))
     """
     best_enm_atk = 0
     best_bot_atk = 0
@@ -135,11 +130,11 @@ def make_best_action(battle: Battle) -> tuple[str, int]:
         if best_enm_atk < effi:
             best_enm_atk = effi
 
-    switch = make_best_switch(battle)
-    if (switch[1] > effi_pkm(battle, bot_pkm, enm_pkm, battle.enemy_team)
+    switch_id, switch_value = make_best_switch(battle)
+    if (switch_value > effi_pkm(battle, bot_pkm, enm_pkm, battle.enemy_team)
         and (best_enm_atk > comparator_calculation(150, bot_pkm, enm_pkm)
-             and (bot_pkm.stats["spe"] * bot_pkm.buff_affect("spe")
-                  - enm_pkm.stats["spe"] * bot_pkm.buff_affect("spe")) < 10
-             or best_bot_atk < comparator_calculation(100, bot_pkm, enm_pkm)) and switch[0]):
-        return "switch", switch[0]
-    return "move", make_best_move(battle)[0]
+             and (bot_pkm.stats[Stats.SPE] * bot_pkm.buff_affect(Stats.SPE)
+                  - enm_pkm.stats[Stats.SPE] * bot_pkm.buff_affect(Stats.SPE)) < 10
+             or best_bot_atk < comparator_calculation(100, bot_pkm, enm_pkm)) and switch_id):
+        return 'switch', switch_id
+    return 'move', make_best_move(battle)[0]

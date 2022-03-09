@@ -16,7 +16,7 @@ async def main():
         while True:
             message = await websocket.recv()
             print(f'[{datetime.now().replace(microsecond=0).isoformat()}] << {message}')
-            await stringing(message, Usage.STANDBY)
+            await stringing(message, Usage.CHALL_OWNER)
 
 
 # def test():

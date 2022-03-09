@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import re
 import time
 from enum import Enum
 
@@ -6,6 +7,7 @@ from src.senders import Sender
 from src.battlelog_parsing import battlelog_parsing
 from src.login import log_in, USERNAME, OWNER
 from src.battle import Battle
+from src.ai import make_best_move
 
 BATTLES = []
 NB_FIGHTS_MAX = 1
@@ -91,7 +93,10 @@ async def battle_tag(message: str, usage: Usage):
                     # Phase de reflexion
                     await battle.make_action()
                 case "callback" if other[0] == "trapped":
-                    await battle.make_move()
+                    await battle.make_move(make_best_move(battle))
+                case "poke" if battle.player_id not in other[0]:
+                    name, variant, level = re.match(r'(.*?)\|(.*?), (?:L(\d+), )?.*', '|'.join(other[0:2])).groups()
+                    battle.update_enemy(name, '100/100', variant, level if level else 100)
                 case "win":
                     await sender.send(battle.battletag, "wp")
                     await sender.leaving(battle.battletag)
@@ -104,7 +109,7 @@ async def battle_tag(message: str, usage: Usage):
         except Exception as exception:
             await sender.send(battle.battletag, 'Sorry, I crashed.')
             await sender.forfeit(battle.battletag)
-            time.sleep(1)
+            time.sleep(2)
             raise exception
 
 
@@ -158,7 +163,7 @@ async def stringing(message: str, usage: Usage = Usage.STANDBY):
             # Logged in and search battle.
             await sender.searching(formats[0])
             NB_FIGHTS += 1
-        case 'deinit' if Usage.SEARCH and NB_FIGHTS < NB_FIGHTS_MAX:
+        case 'deinit' if usage == Usage.SEARCH and NB_FIGHTS < NB_FIGHTS_MAX:
             # If previous fight is over, we're in search usage and it remains fights
             await sender.searching(formats[0])
             NB_FIGHTS += 1
