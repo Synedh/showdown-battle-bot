@@ -130,7 +130,7 @@ def comparator_calculation(power: float|int, pkm1: Pokemon, pkm2: Pokemon) -> in
     if pkm1.stats[Stats.ATK] > pkm1.stats[Stats.SPA]:
         categories = Stats.ATK, Stats.DEF
     atk = pkm1.compute_stat(categories[0])
-    defe = pkm2.compute_stat(categories[1], 0)
+    defe = pkm2.compute_stat(categories[1])
     return floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
 
 
@@ -147,7 +147,7 @@ def damage_calculation(battle, move: dict, pkm1: Pokemon, pkm2: Pokemon) -> int:
         return pkm1.level
     categories = (Stats.SPA, Stats.SPD) if move['category'] == 'Special' else (Stats.ATK, Stats.DEF)
     atk = pkm1.compute_stat(categories[0])
-    defe = pkm2.compute_stat(categories[1], 0)
+    defe = pkm2.compute_stat(categories[1])
     power = move['basePower']
     stab = 1.5 if move['type'] in pkm1.types else 1
     effi = efficiency(move['type'], pkm2.types)
