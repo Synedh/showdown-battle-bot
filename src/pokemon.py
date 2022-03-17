@@ -47,6 +47,8 @@ def infos_for_pokemon(pkm_name: str) -> dict:
         formats_data.get(pkm_name, {}).get("randomBattleMoves", [])
         + formats_data.get(f'{pkm_name}max', {}).get("randomBattleMoves", [])
     ))
+    if not pokemon_moves:
+        raise KeyError(f'No move found for pkm_name "{pkm_name}".')
     return {
         "types": pokemon["types"],
         "possibleAbilities": list(pokemon["abilities"].values()),
@@ -166,9 +168,7 @@ class Pokemon:
         :param stat: Stats
         :return: Integer
         """
-        r = stat_calculation(self.stats[stat], self.level, ev)
-        print(self.name, self.level, r,  self.buff_affect(stat))
-        return r * self.buff_affect(stat)
+        return stat_calculation(self.stats[stat], self.level, ev) * self.buff_affect(stat)
     def __repr__(self) -> int:
         return str(vars(self))
 

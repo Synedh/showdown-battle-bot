@@ -16,7 +16,7 @@ def efficiency(elem: str, elems: list[str]) -> int:
         typechart = json.load(data_file)
         for target_elem in elems:
             tmp = typechart[target_elem.lower()]['damageTaken'][elem]
-            res *= {0: 1, 1: 2, 2: 0.5, 3: 0}[tmp]
+            res *= [1, 2, 0.5, 0][tmp]
     return res
 
 
@@ -28,20 +28,19 @@ def item_modificator(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> float|int:
     :param pkm2: Pokemon that will receive move.
     :return: Float or Integer [0; +oo[
     """
-    mod = 1
-    if pkm1.item == 'lifeorb':
-        mod *= 1.3
-    elif pkm1.item == 'expertbelt' and efficiency(move['type'], pkm2.types) > 1:
-        mod *= 1.2
-    elif pkm1.item == 'choicespecs' and move['category'] == 'Special':
-        mod *= 1.5
-    elif pkm1.item == 'choiceband' and move['category'] == 'Physical':
-        mod *= 1.5
-    elif pkm1.item == 'thickclub' and move['category'] == 'Physical':
-        mod *= 1.5
     if pkm2.item == 'airballoon' and move['type'] == 'Ground':
-        mod = 0
-    return mod
+        return 0
+    match pkm1.item:
+        case 'lifeorb':
+            return 1.3
+        case 'expertbelt' if efficiency(move['type'], pkm2.types) > 1:
+            return 1.2
+        case 'choicespecs' if move['category'] == 'Special':
+            return 1.5
+        case 'choiceband' | 'thickclub' if move['category'] == 'Physical':
+            return 1.5
+        case _:
+            return 1
 
 
 def ability_modificator(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> float|int:
@@ -110,13 +109,13 @@ def field_modificator(battle, move: dict, _: Pokemon, pkm2: Pokemon) -> float|in
         or battle.weather.lower() == 'Sunny' and move['type'] == 'Water'):
         mod *= 0.5
 
-    if (move['category'] == 'Special' and battle.screens['lightscreen']
-        or move['category'] == 'Physical' and battle.screens['reflect']):
+    if (move['category'] == 'Special' and 'Light Screen' in battle.side_condition
+        or move['category'] == 'Physical' and 'Reflect' in battle.side_condition):
         mod *= 0.5
     return mod
 
 
-def comparator_calculation(power: float|int, pkm1: Pokemon, pkm2: Pokemon) -> int:
+def base_damages(power: float, pkm1: Pokemon, pkm2: Pokemon) -> int:
     """
     Used to compare damage done by pk1 to comparative values (100, 150, etc.).
     Because we want exact values, modificators, stab, burn and efficiency are
@@ -145,18 +144,14 @@ def damage_calculation(battle, move: dict, pkm1: Pokemon, pkm2: Pokemon) -> int:
     """
     if move['name'] == 'Seismic Toss' and 'Ghost' not in pkm2.types:
         return pkm1.level
-    categories = (Stats.SPA, Stats.SPD) if move['category'] == 'Special' else (Stats.ATK, Stats.DEF)
-    atk = pkm1.compute_stat(categories[0])
-    defe = pkm2.compute_stat(categories[1])
-    power = move['basePower']
+    damages = base_damages(move['basePower'], pkm1, pkm2)
     stab = 1.5 if move['type'] in pkm1.types else 1
     effi = efficiency(move['type'], pkm2.types)
     burn = 0.5 if pkm1.status == Status.BRN and move['category'] == 'Physical' and 'Guts' not in pkm1.abilities else 1
     item_mod = item_modificator(move, pkm1, pkm2)
     ability_mod = ability_modificator(move, pkm1, pkm2)
     field_mod = field_modificator(battle, move, pkm1, pkm2)
-    return floor(floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
-                 * stab * effi * burn * item_mod * ability_mod * field_mod)
+    return floor(damages * stab * effi * burn * item_mod * ability_mod * field_mod)
 
 
 def effi_boost(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> bool:
@@ -184,26 +179,24 @@ def effi_status(move: dict, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move
     :param pkm2: Pokemon that will receive move
-    :param team: Team of pkm1
+    :param team: Team of pkm2
     :return: Integer, value of move [0, +oo[.
     """
     match move['status']:
-        case 'tox' if "Poison" not in pkm2.types and "Steel" not in pkm2.types:
+        case 'tox' if 'Poison' not in pkm2.types and 'Steel' not in pkm2.types:
             return 100
-        case 'par' if "Electric" not in pkm2.types or "Ground" not in pkm2.types:
+        case 'par' if 'Electric' not in pkm2.types or 'Ground' not in pkm2.types:
             if pkm1.stats[Stats.SPE] - pkm2.stats[Stats.SPE] < 10:
                 return 200
             return 100
-        case 'brn' if "Fire" not in pkm2.types:
-            if pkm2.stats[Stats.ATK] - pkm2.stats[Stats.SPA] > 10:
+        case 'brn' if 'Fire' not in pkm2.types:
+            if pkm2.stats[Stats.ATK] > pkm2.stats[Stats.SPA] + 10:
                 return 200
             return 60
-        case 'slp' if not ("Grass" in pkm2.types \
-                or "Vital Spirit" in pkm2.abilities \
-                or "Insomnia" in pkm2.abilities):
-            for pkm in team.pokemons:  # Sleep clause
-                if pkm.status == Status.SLP:
-                    return 0
+        case 'slp' if not ('Grass' in pkm2.types \
+                or 'Vital Spirit' in pkm2.abilities \
+                or 'Insomnia' in pkm2.abilities
+                or any(pkm.status == Status.SLP for pkm in team.pokemons)): # Sleep clause
             return 200
     return 0
 
@@ -215,7 +208,7 @@ def effi_move(battle, move: dict, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> i
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move
     :param pkm2: Pokemon that will receive move
-    :param team: Team of pkm1
+    :param team: Team of pkm2
     :return: Integer
     """
     if 'status' in move and pkm2.status == Status.UNK:

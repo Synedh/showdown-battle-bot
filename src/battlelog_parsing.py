@@ -46,16 +46,16 @@ def minor_actions(battle: Battle, command: str, split_line: list[str]):
             battle.weather = split_line[0]
         case "-fieldstart":
             battle.fields.append(split_line[0])
+            print("** " + battle.fields)
         case "-fieldend":
             battle.fields.remove(split_line[0])
+            print("** " + battle.fields)
         case "-sidestart":
-            if "Reflect" in split_line[1] or "Light Screen" in split_line[1]:
-                battle.screens[split_line[1].split(":")[1].lower().replace(" ", "")] = True
-                print("** " + battle.screens)
+            battle.side_condition.append(split_line[1])
+            print("** " + battle.side_condition)
         case "-sideend":
-            if "Reflect" in split_line[1] or "Light Screen" in split_line[1]:
-                battle.screens[split_line[1].split(":")[1].lower().replace(" ", "")] = False
-                print("** " + battle.screens)
+            battle.side_condition.remove(split_line[1])
+            print("** " + battle.side_condition)
         case "-crit":
             pass
         case "-supereffective":

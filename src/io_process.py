@@ -130,6 +130,8 @@ async def private_message(user: str, _, content: str, *other: str):
         if content == '.help':
             await sender.send('', f'/pm {user}, Showdown Battle Bot. Active for {", ".join(formats[:-1])} and {formats[-1]}.')
             await sender.send('', f'/pm {user}, Please challenge me to test your skills.')
+        elif content == '.chall':
+            await sender.challenge({user}, formats[0])
         else:
             await sender.send('', f'/pm {user}, Unknown command, type ".help" for help.')
     elif content.startswith('/challenge'):
