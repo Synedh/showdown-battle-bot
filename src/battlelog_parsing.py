@@ -75,9 +75,9 @@ def minor_actions(battle: Battle, split_line):
         pass
     elif split_line[0] == "-item":
         if battle.player_id in split_line[1]:
-            battle.bot_team.active().item = split_line[2].lower.replace(" ", "")
+            battle.bot_team.active().item = split_line[2].lower().replace(" ", "")
         else:
-            battle.enemy_team.active().item = split_line[2].lower.replace(" ", "")
+            battle.enemy_team.active().item = split_line[2].lower().replace(" ", "")
     elif split_line[0] == "-enditem":
         if battle.player_id not in split_line[1]:
             battle.bot_team.active().item = None

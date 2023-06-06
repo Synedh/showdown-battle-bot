@@ -19,18 +19,20 @@ def test():
     """
     Test function. Allow to test damages calculation between two pokemons.
     """
-    from src.pokemon import Pokemon
+    from src.pokemon import Pokemon, Status
     from src.move_efficiency import effi_move
 
-    pkm1 = Pokemon("Lanturn", "", True, 100)
+    pkm1 = Pokemon("Abomasnow", "", True, 100)
+    # pkm1.status = Status.BRN
     pkm1.load_unknown()
-    pkm2 = Pokemon("Lanturn", "", True, 100)
+    pkm2 = Pokemon("Abomasnow", "", True, 100)
+    # pkm2.item = "airballoon"
     pkm2.load_unknown()
 
     # print(pkm1.moves)
     for move in pkm1.moves:
         print(move["name"])
-    print(effi_move(pkm1.moves[2], pkm1, pkm2, []))
+    print(effi_move(pkm1.moves[7], pkm1, pkm2, []))
 
 
 if __name__ == "__main__":
