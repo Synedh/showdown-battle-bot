@@ -7,16 +7,26 @@ from login import log_in
 from state import Battle
 import senders
 
-battle = None
+battles = []
+
+
+def check_battle(battle_list, room_id):
+    for battle in battle_list:
+        if battle.room_id == room_id:
+            return battle
+    return None
+
 
 async def battle_tag(websocket, message):
-    global battle
+    global battles
     lines = message.splitlines()
+    battle = check_battle(battles, lines[0].split('-')[len(lines[0].split('-')) - 1])
     for line in lines[1:]:
         if len(line) > 1:
             current = line.split('|')
             if current[1] == "init":
-                battle = Battle(line[0].split('-')[len(line[0].split('-')) - 1])
+                #creation de la bataille
+                battles.append(Battle(lines[0].split('-')[len(lines[0].split('-')) - 1]))
             elif current[1] == "player" and current[3].lower() == "suchtestnot":
                 battle.set_player_id(current[2])
             elif current[1] == "request":
@@ -24,7 +34,11 @@ async def battle_tag(websocket, message):
             elif current[1] == "switch" and battle.player_id not in current[2]:
                 battle.update_enemy(current[3].split(',')[0], current[4])
             elif current[1] == "turn":
-                battle.makeMove(current[2])
+                await battle.makeMove(websocket, current[2])
+            elif current[1] == "c":
+                # This is a message
+                pass
+
 
 async def stringing(websocket, message):
     string_tab = message.split('|')
@@ -34,12 +48,17 @@ async def stringing(websocket, message):
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
         await senders.challenge(websocket, "Synedh")
-        pass
-    # elif "updatechallenges" in string_tab[1]:
-    #     await senders.sender(websocket, "", "/accept Synedh", "")
+    elif "updatechallenges" in string_tab[1]:
+        # Si synedh envoie un challenge, alors accepter
+        try:
+            if string_tab[2].split('\"')[3] != "challengeTo":
+                await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3], "")
+        except:
+            pass
     elif "battle" in string_tab[0]:
-        await battle_tag(websocket, message)
         # Si on recoit un message dans une interface de combat
+        await battle_tag(websocket, message)
+
 
 async def main():
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
@@ -47,5 +66,6 @@ async def main():
             message = await websocket.recv()
             print("<< {}".format(message))
             await stringing(websocket, message)
+
 
 asyncio.get_event_loop().run_until_complete(main())
