@@ -56,6 +56,8 @@ async def battle_tag(websocket, message, usage):
                 battle.player_id = current[2]
                 battle.turn += int(current[2].split('p')[1]) - 1
             elif current[1] == "request":
+                if current[2] == '':
+                    continue;
                 # Maj team bot
                 if len(current[2]) == 1:
                     try:
