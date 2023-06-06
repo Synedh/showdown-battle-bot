@@ -1,6 +1,4 @@
-from websocket import WebSocket
-
-async def sender(websocket: WebSocket, room: str, message1: str, message2: str = None):
+async def sender(websocket, room, message1, message2=None):
     """
     Default websocket sender. Format message and send websocket.
     :param websocket: Websocket stream.
@@ -15,14 +13,14 @@ async def sender(websocket: WebSocket, room: str, message1: str, message2: str =
     print('>> {}'.format(string))
     await websocket.send(string)
 
-async def searching(websocket: WebSocket):
+async def searching(websocket):
     """
     Format search websocket, call sender function.
     :param websocket: Websocket stream.
     """
     await sender(websocket, "", "/search gen7randombattle")
 
-async def challenge(websocket: WebSocket, player: str):
+async def challenge(websocket, player):
     """
     Format challenging websocket, call sender function.
     :param websocket: Websocket stream
@@ -30,7 +28,7 @@ async def challenge(websocket: WebSocket, player: str):
     """
     await sender(websocket, "", "/challenge " + player + ", gen7randombattle")
 
-async def sendmessage(websocket: WebSocket, battletag: str, message: str):
+async def sendmessage(websocket, battletag, message):
     """
     Format text websocket, call sender function.
     :param websocket: Websocket stream.
@@ -39,7 +37,7 @@ async def sendmessage(websocket: WebSocket, battletag: str, message: str):
     """
     await sender(websocket, battletag, message)
 
-async def sendmove(websocket: WebSocket, battletag: str, move: int, turn: int):
+async def sendmove(websocket, battletag, move, turn):
     """
     Format move choice websocket, call sender function.
     :param websocket: Websocket stream.
@@ -49,7 +47,7 @@ async def sendmove(websocket: WebSocket, battletag: str, move: int, turn: int):
     """
     await sender(websocket, battletag, "/choose move " + str(move), str(turn))
 
-async def sendswitch(websocket: WebSocket, battletag: str, pokemon: int, turn: int):
+async def sendswitch(websocket, battletag, pokemon, turn):
     """
     Format switch choice websocket, call sender function.
     :param websocket: Websocket stream.
@@ -59,7 +57,7 @@ async def sendswitch(websocket: WebSocket, battletag: str, pokemon: int, turn: i
     """
     await sender(websocket, battletag, "/choose switch " + str(pokemon), str(turn))
 
-async def leaving(websocket: WebSocket, battletag: str):
+async def leaving(websocket, battletag):
     """
     Format leaving room websocket, call sender function.
     :param websocket: Websocket stream.

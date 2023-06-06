@@ -1,11 +1,9 @@
 #!/usr/bin/env python3
 
-from websocket import WebSocket
-
 from src import senders
-from src.battle import Battle
 from src.battlelog_parsing import battlelog_parsing
 from src.login import log_in
+from src.battle import Battle
 
 battles = []
 nb_fights_max = 20
@@ -19,7 +17,7 @@ formats = [
 ]
 
 
-def check_battle(battle_list: [Battle], battletag: str) -> Battle or None:
+def check_battle(battle_list, battletag) -> Battle:
     """
     Get Battle corresponding to room_id.
     :param battle_list: Array of Battle.
@@ -31,7 +29,7 @@ def check_battle(battle_list: [Battle], battletag: str) -> Battle or None:
             return battle
     return None
 
-async def battle_tag(websocket: WebSocket, message: str):
+async def battle_tag(websocket, message):
     """
     Main in fuction. Filter every message sent by server and launch corresponding function.
     :param websocket: Websocket stream.
@@ -55,15 +53,34 @@ async def battle_tag(websocket: WebSocket, message: str):
             elif current[1] == "request":
                 # Maj team bot
                 if len(current[2]) == 1:
-                    # try:
+                    try:
                         await battle.req_loader(current[3].split('\n')[1], websocket)
-                    # except:
-                    #     print(current[3])
+                    except:
+                        print(current[3])
                 else:
                     await battle.req_loader(current[2], websocket)
+            # elif current[1] == "switch" and battle.player_id not in current[2]:
+            #     # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
+            #     battle.update_enemy(current[3].split(',')[0], current[4], current[3].split(',')[1].split('L')[1])
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
+            # elif current[1] == "-status" and battle.player_id not in current[2]:
+            #     battle.update_status_enemy(current[3])
+            # elif current[1] == "-item" and battle.player_id not in current[2]:
+            #     battle.set_enemy_item(current[3])
+            # elif current[1] == "-enditem" and battle.player_id not in current[2]:
+            #     battle.set_enemy_item("")
+            # elif current[1] == "-boost":
+            #     if battle.player_id in current[2]:
+            #         battle.set_bot_buff(current[3], int(current[4]))
+            #     else:
+            #         battle.set_enemy_buff(current[3], int(current[4]))
+            # elif current[1] == "-unboost":
+            #     if battle.player_id in current[2]:
+            #         battle.set_bot_buff(current[3], - int(current[4]))
+            #     else:
+            #         battle.set_enemy_buff(current[3], - int(current[4]))
             elif current[1] == "callback" and current[2] == "trapped":
                 await battle.make_move(websocket)
             elif current[1] == "win":
@@ -85,7 +102,7 @@ async def battle_tag(websocket: WebSocket, message: str):
         except IndexError:
             pass
 
-async def stringing(websocket: WebSocket, message: str):
+async def stringing(websocket, message):
     """
     First filtering function on received messages.
     Handle challenge and research actions.

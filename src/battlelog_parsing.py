@@ -13,7 +13,7 @@ def major_actions(battle: Battle, split_line):
         pass
     elif split_line[0] == "switch":
         if battle.player_id not in split_line[1]:
-            battle.update_enemy(split_line[2].split(',')[0], int(split_line[2].split(',')[1].split('L')[1]), split_line[3])
+            battle.update_enemy(split_line[2].split(',')[0], split_line[2].split(',')[1].split('L')[1], split_line[3])
     elif split_line[0] == "swap":
         pass
     elif split_line[0] == "detailschange":
@@ -75,10 +75,10 @@ def minor_actions(battle: Battle, split_line):
         pass
     elif split_line[0] == "-item":
         if battle.player_id not in split_line[1]:
-            battle.set_item(battle.enemy_team.active(), split_line[2])
+            battle.set_enemy_item(split_line[2])
     elif split_line[0] == "-enditem":
         if battle.player_id not in split_line[1]:
-            battle.set_item(battle.enemy_team.active(), "")
+            battle.set_enemy_item("")
     elif split_line[0] == "-ability":
         pass
     elif split_line[0] == "-endability":
