@@ -1,7 +1,9 @@
+from src.battle import Battle
 from src.move_efficiency import *
+from src.pokemon import Pokemon, Team
 
 
-def effi_pkm(pkm1, pkm2, team):
+def effi_pkm(pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     """
     Efficiency of pokemon against other.
     Based on previous function.
@@ -29,7 +31,7 @@ def effi_pkm(pkm1, pkm2, team):
     return effi1 - effi2
 
 
-def make_best_switch(battle):
+def make_best_switch(battle: Battle) -> (int, int):
     """
     Parse battle.bot_tem to find the best pokemon based on his efficiency against current enemy pokemon.
     :param battle: Battle object, current battle.
@@ -51,11 +53,11 @@ def make_best_switch(battle):
         return -1, -1024
 
 
-def make_best_move(battle):
+def make_best_move(battle: Battle) -> (int, int):
     """
     Parse attacks of current pokemon and send the most efficient based on previous function
     :param battle: Battle object, current battle.
-    :return: {Index of move in pokemon (Integer, [-1, 4), efficiency (Integer, [0, +oo])}
+    :return: (Index of move in pokemon (Integer, [-1, 4]), efficiency (Integer, [0, +oo]))
     """
     pokemon_moves = battle.current_pkm[0]["moves"]
     pokemon = battle.bot_team.active()
@@ -80,13 +82,13 @@ def make_best_move(battle):
     return best_move
 
 
-def make_best_action(battle):
+def make_best_action(battle: Battle) -> (str, int):
     """
     Global function to choose best action to do each turn.
     Select best action of bot and enemy pokemon, then best pokemon to switch. And finally, chose if it worth or not to
     switch.
     :param battle: Battle object, current battle.
-    :return: {Index of move in pokemon (["move"|"switch"], Integer, [-1, 6])}
+    :return: (["move"|"switch"], [-1, 6])
     """
     best_enm_atk = 0
     best_bot_atk = 0

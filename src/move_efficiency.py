@@ -1,9 +1,9 @@
 import json
 
-from src.pokemon import Status
+from src.pokemon import Pokemon, Team, Status
 
 
-def stat_calculation(base, level):
+def stat_calculation(base: int, level: int) -> int:
     """
     Calculation of stats based on base stat and level.
     IV and EV are maxed, nature is not used.
@@ -15,7 +15,7 @@ def stat_calculation(base, level):
     return int(abs(((2 * base + 31 + 63) * level) / 100 + 5))
 
 
-def efficiency(elem: str, elems: [str]):
+def efficiency(elem: str, elems: [str]) -> int:
     """
     Type chart calculator.
     :param elem: Elem of move.
@@ -36,7 +36,7 @@ def efficiency(elem: str, elems: [str]):
     return res
 
 
-def damage_calculation(move, pkm1, pkm2):
+def damage_calculation(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> int:
     """
     Damage move calculation.
     :param move: Json object, status move.
@@ -56,10 +56,10 @@ def damage_calculation(move, pkm1, pkm2):
     print("((((((((" + str(pkm1.level) + " * 2 / 5) + 2) * " + str(power) + " * " + str(atk) + " / 50) / "
           + str(defe) + ") * " + str(mod1) + ") / 2) * " + str(mod2) + ") * " + str(stab) + " * " + str(effi)
           + " * " + str(mod3) + ")")
-    return ((((((((pkm1.level * 2 / 5) + 2) * power * atk / 50) / defe) * mod1) / 2) * mod2) * stab * effi * mod3)
+    return (((((((pkm1.level * 2 / 5) + 2) * power * atk / 50) / defe) * mod1) / 2) * mod2) * stab * effi * mod3
 
 
-def effi_boost(move, pkm1, pkm2):
+def effi_boost(move: dict, pkm1: Pokemon, pkm2: Pokemon) -> bool:
     value = 0
     tmp = {}
     for i in pkm1.moves:
@@ -84,7 +84,7 @@ def effi_boost(move, pkm1, pkm2):
     return False
 
 
-def effi_status(move, pkm1, pkm2, team):
+def effi_status(move: dict, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     """
     Efficiency status calculator.
     Give arbitrary value to status move depending on types, abilities and stats.
@@ -121,14 +121,14 @@ def effi_status(move, pkm1, pkm2, team):
         return 200
 
 
-def effi_move(move, pkm1, pkm2, team):
+def effi_move(move: dict, pkm1: Pokemon, pkm2: Pokemon, team: Team) -> int:
     """
     Calculate efficiency of move based on previous functions, type, base damage and item.
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move
     :param pkm2: Pokemon that will receive move
     :param team: Team of pkm1
-    :return: Integer
+    :return: Integer, value of move [0, +oo].
     """
     non_volatile_status_moves = [
         "toxic",  # tox
