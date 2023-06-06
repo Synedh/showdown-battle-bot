@@ -82,8 +82,8 @@ async def stringing(websocket, message):
         await log_in(websocket, string_tab[2], string_tab[3])
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
-        # pass
-        await senders.searching(websocket)
+        pass
+        # await senders.searching(websocket)
         # await senders.challenge(websocket, "Synedh")
     elif "updatechallenges" in string_tab[1]:
         # Si quelqu'un envoie un challenge, alors accepter

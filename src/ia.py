@@ -4,6 +4,12 @@ from src.pokemon import Status
 
 
 def efficiency(elem: str, elems: [str]):
+    """
+    Type chart calculator.
+    :param elem: Elem of move.
+    :param elems: Elements of target pokemon.
+    :return: Integer, efficiency multiplication.
+    """
     res = 1
     with open('data/typechart.json') as data_file:
         typechart = json.load(data_file)
@@ -19,8 +25,17 @@ def efficiency(elem: str, elems: [str]):
 
 
 def effi_status(move, pkm1, pkm2, team):
+    """
+    Efficiency status calculator.
+    Give arbitrary value to status move depending on types, abilities and stats.
+    :param move: Json object, status move.
+    :param pkm1: Pokemon that will use move
+    :param pkm2: Pokemon that will receive move
+    :param team: Team of pkm1
+    :return: Integer, value of move [0, +oo].
+    """
     if move["id"] in ["toxic", "poisonpowder"]:
-        if "Poison" in pkm2.types:
+        if "Poison" in pkm2.types or "Steel" in pkm2.types:
             return 0
         return 100
     elif move["id"] in ["thunderwave", "stunspore", "glare"]:
@@ -47,6 +62,14 @@ def effi_status(move, pkm1, pkm2, team):
 
 
 def effi_move(move, pkm1, pkm2, team):
+    """
+    Calculate efficiency of move based on previous functions, type, base damage and item.
+    :param move: Json object, status move.
+    :param pkm1: Pokemon that will use move
+    :param pkm2: Pokemon that will receive move
+    :param team: Team of pkm1
+    :return: Integer
+    """
     non_volatile_status_moves = [
         "toxic",  # tox
         "poisonpowder",  # psn
@@ -55,8 +78,6 @@ def effi_move(move, pkm1, pkm2, team):
         "spore", "darkvoid", "sleeppowder", "sing", "grasswhistle", "hypnosis", "lovelykiss"  # slp
     ]
 
-    if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
-        return effi_status(move, pkm1, pkm2, team)
     effi = efficiency(move["type"], pkm2.types) * move["basePower"]
     if move["type"] in pkm1.types:
         effi *= 1.5
@@ -72,10 +93,23 @@ def effi_move(move, pkm1, pkm2, team):
             or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
             or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
         effi = 0
+
+    if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
+        return effi_status(move, pkm1, pkm2, team)
     return effi
 
 
 def effi_pkm(pkm1, pkm2, team):
+    """
+    Efficiency of pokemon against other.
+    Based on previous function.
+    If efficiency of a pokemon > 150 and is faster, efficiency of the other pokemon is not taken.
+    effi_pkm(a, b, team_a) = - effi_pkm(b, a, team_b)
+    :param pkm1: Pokemon that will use move
+    :param pkm2: Pokemon that will receive move
+    :param team: Team of pkm1
+    :return: Integer, can be negative.
+    """
     effi1 = 0
     effi2 = 0
     for move in pkm1.moves:
@@ -94,6 +128,11 @@ def effi_pkm(pkm1, pkm2, team):
 
 
 def make_best_switch(battle):
+    """
+    Parse battle.bot_tem to find the best pokemon based on his efficiency against current enemy pokemon.
+    :param battle: Battle object, current battle.
+    :return: {Index of pokemon in bot_team (Integer, [-1, 6]), efficiency (Integer, [0, +oo])}
+    """
     team = battle.bot_team
     enemy_pkm = battle.enemy_team.active()
     best_pkm = None
@@ -107,10 +146,15 @@ def make_best_switch(battle):
     try:
         return team.pokemons.index(best_pkm) + 1, effi
     except ValueError:
-        return None, effi
+        return -1, effi
 
 
 def make_best_move(battle):
+    """
+    Parse attacks of current pokemon and send the most efficient based on previous function
+    :param battle: Battle object, current battle.
+    :return: {Index of move in pokemon (Integer, [-1, 4), efficiency (Integer, [0, +oo])}
+    """
     pokemon_moves = battle.current_pkm[0]["moves"]
     pokemon = battle.bot_team.active()
     enemy_pkm = battle.enemy_team.active()
@@ -131,6 +175,13 @@ def make_best_move(battle):
 
 
 def make_best_action(battle):
+    """
+    Global function to choose best action to do each turn.
+    Select best action of bot and enemy pokemon, then best pokemon to switch. And finally, chose if it worth or not to
+    switch.
+    :param battle: Battle object, current battle.
+    :return: {Index of move in pokemon (["move"|"switch"], Integer, [-1, 6])}
+    """
     best_enm_atk = 0
     best_bot_atk = 0
     bot_pkm = battle.bot_team.active()
