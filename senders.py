@@ -1,5 +1,3 @@
-#coding: utf8
-
 async def sender(websocket, room, message1, message2):
     if len(message2) > 0:
         string = room + '|' + message1 + '|' + message2
