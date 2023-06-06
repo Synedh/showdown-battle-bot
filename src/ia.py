@@ -24,6 +24,31 @@ def efficiency(elem: str, elems: [str]):
     return res
 
 
+def effi_boost(move, pkm1, pkm2):
+    value = 0
+    tmp = {}
+    for i in pkm1.moves:
+        if i["name"] == move["move"]:
+            tmp = i
+    try:
+        if "boosts" in tmp and "spe" in tmp["boosts"]:
+            value = tmp["boosts"]["spe"]
+        elif "self" in tmp and "boosts" in tmp["self"] and "spe" in tmp["self"]["boosts"]:
+            value = tmp["self"]["boosts"]["spe"]
+        elif ("secondary" in tmp and  tmp["secondary"] and "self" in tmp["secondary"]
+              and "boosts" in tmp["secondary"]["self"] and "spe" in tmp["secondary"]["self"]["boosts"]):
+            value = tmp["secondary"]["self"]["boosts"]["spe"]
+        if (pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") < 10
+            and (pkm1.stats["spe"] * pkm1.buff_affect("spe") + value * pkm1.stats["spe"]
+                 - pkm2.stats["spe"] * pkm2.buff_affect("spe") > 10)):
+            return True
+    except KeyError as e:
+        print("\033[31m" + str(e))
+        print(str(tmp) + "\033[0m")
+        exit()
+    return False
+
+
 def effi_status(move, pkm1, pkm2, team):
     """
     Efficiency status calculator.
@@ -78,6 +103,14 @@ def effi_move(move, pkm1, pkm2, team):
         "spore", "darkvoid", "sleeppowder", "sing", "grasswhistle", "hypnosis", "lovelykiss"  # slp
     ]
 
+    if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
+        return effi_status(move, pkm1, pkm2, team)
+
+    if (move["type"] == "Ground" and ("Levitate" in pkm2.abilities or pkm2.item == "Air Balloon")
+        or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
+            or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
+        return 0
+
     effi = efficiency(move["type"], pkm2.types) * move["basePower"]
     if move["type"] in pkm1.types:
         effi *= 1.5
@@ -94,14 +127,6 @@ def effi_move(move, pkm1, pkm2, team):
         effi *= pkm1.buff_affect("spa") / pkm2.buff_affect("spd")
     elif move["category"] == "Physical":
         effi *= pkm1.buff_affect("atk") / pkm2.buff_affect("def")
-
-    if (move["type"] == "Ground" and ("Levitate" in pkm2.abilities or pkm2.item == "Air Balloon")
-        or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
-        or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
-        effi = 0
-
-    if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
-        return effi_status(move, pkm1, pkm2, team)
     return effi
 
 
@@ -171,12 +196,16 @@ def make_best_move(battle):
             if move["name"] == pokemon_moves[0]["move"]:
                 return 1, effi_move(move, pokemon, enemy_pkm, battle.enemy_team)
 
-    for i, move in enumerate(pokemon.moves):
+    for i, move in enumerate(pokemon.moves):  # Classical parse
         if "disabled" in pokemon_moves[i].keys() and pokemon_moves[i]["disabled"]:
             continue
         effi = effi_move(move, pokemon, enemy_pkm, battle.enemy_team)
         if effi > best_move[1]:
             best_move = (i + 1, effi)
+
+    for i, move in enumerate(pokemon_moves):  # Boosts handling
+        if effi_boost(move, pokemon, enemy_pkm):
+            best_move = (i + 1, best_move[1] + 1)
     return best_move
 
 

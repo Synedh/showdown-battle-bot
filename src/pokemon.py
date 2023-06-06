@@ -34,7 +34,12 @@ def infos_for_pokemon(pkm_name):
     res["possibleAbilities"] = list(pokemon["abilities"].values())
     res["baseStats"] = pokemon["baseStats"]
     with open('data/formats-data.json') as data_file:
-        pokemon_moves = json.load(data_file)[pkm_name]["randomBattleMoves"]
+        pokemon_moves = []
+        try:
+            pokemon_moves = json.load(data_file)[pkm_name]["randomBattleMoves"]
+        except:
+            print("\033[31m ** " + json.load(data_file)[pkm_name] + "\033[0m")
+            exit()
     with open("data/moves.json") as data_file:
         moves = json.load(data_file)
     for move in pokemon_moves:
