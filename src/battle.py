@@ -64,10 +64,10 @@ class Battle:
         if "-mega" in pkm_name.lower():
             self.enemy_team.remove(pkm_name.lower().split("-mega")[0])
         if "-*" in pkm_name.lower():
-            pkm_name = re.sub(r"(.+)\-\*", r"\1", pkm_name)
-        elif re.compile(r".+\-.*").search(pkm_name.lower()):
+            pkm_name = re.sub(r"(.+)-\*", r"\1", pkm_name)
+        elif re.compile(r".+-.*").search(pkm_name.lower()):
             try:
-                self.enemy_team.remove(re.sub(r"(.+)\-.+", r"\1", pkm_name))
+                self.enemy_team.remove(re.sub(r"(.+)-.+", r"\1", pkm_name))
             except NameError:
                 pass
 
@@ -131,6 +131,11 @@ class Battle:
         Call function to send move and use the sendmove sender.
         :param websocket: Websocket stream.
         """
+        best_move = make_best_move(self)
+        print(best_move[1])
+        if best_move[1] < 20:
+            print("Best move power < 20. Move list : "
+                  + ", ".join([move["move"] for move in self.current_pkm[0]['moves']]) + ".")
         if "canMegaEvo" in self.current_pkm[0]:
             await senders.sendmove(websocket, self.battletag, str(make_best_move(self)[0]) + " mega", self.turn)
         else:

@@ -16,7 +16,8 @@ formats = [
     "gen7hackmonscup",
     "gen7challengecup1v1",
     "gen6battlefactory",
-    "gen7bssfactory"
+    "gen7bssfactory",
+    "gen7randomdoublesbattle"
 ]
 
 
