@@ -59,28 +59,9 @@ async def battle_tag(websocket, message):
                         print(current[3])
                 else:
                     await battle.req_loader(current[2], websocket)
-            # elif current[1] == "switch" and battle.player_id not in current[2]:
-            #     # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
-            #     battle.update_enemy(current[3].split(',')[0], current[4], current[3].split(',')[1].split('L')[1])
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
-            # elif current[1] == "-status" and battle.player_id not in current[2]:
-            #     battle.update_status_enemy(current[3])
-            # elif current[1] == "-item" and battle.player_id not in current[2]:
-            #     battle.set_enemy_item(current[3])
-            # elif current[1] == "-enditem" and battle.player_id not in current[2]:
-            #     battle.set_enemy_item("")
-            # elif current[1] == "-boost":
-            #     if battle.player_id in current[2]:
-            #         battle.set_bot_buff(current[3], int(current[4]))
-            #     else:
-            #         battle.set_enemy_buff(current[3], int(current[4]))
-            # elif current[1] == "-unboost":
-            #     if battle.player_id in current[2]:
-            #         battle.set_bot_buff(current[3], - int(current[4]))
-            #     else:
-            #         battle.set_enemy_buff(current[3], - int(current[4]))
             elif current[1] == "callback" and current[2] == "trapped":
                 await battle.make_move(websocket)
             elif current[1] == "win":
@@ -98,6 +79,7 @@ async def battle_tag(websocket, message):
                 # This is a message
                 pass
             else:
+                # Send to battlelog parser.
                 battlelog_parsing(battle, current[1:])
         except IndexError:
             pass
