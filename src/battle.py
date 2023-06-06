@@ -111,7 +111,8 @@ class Battle:
             "6": 4
         }
         buff = self.bot_team.active().buff[stat][0] + quantity
-        self.bot_team.active().buff[stat] = [buff, modifs[str(buff)]]
+        if buff <= 6 and buff >= -6:
+            self.bot_team.active().buff[stat] = [buff, modifs[str(buff)]]
 
     def set_enemy_buff(self, stat, quantity):
         modifs = {
@@ -130,7 +131,8 @@ class Battle:
             "6": 4,
         }
         buff = self.enemy_team.active().buff[stat][0] + quantity
-        self.enemy_team.active().buff[stat] = [buff, modifs[str(buff)]]
+        if buff <= 6 and buff >= -6:
+            self.enemy_team.active().buff[stat] = [buff, modifs[str(buff)]]
 
     async def make_move(self, wensocket):
         """
