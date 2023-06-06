@@ -80,6 +80,8 @@ celerybeat-schedule
 
 # pycharm editor
 .idea/
+workspace.xml
+
 
 # virtualenv
 venv/

@@ -32,15 +32,15 @@ class Battle:
         self.player_id = player_id
 
     def update_enemy(self, pkm_name, condition):
+        if "mega" in pkm_name.lower():
+            self.enemy_team.remove(pkm_name.lower().split("-mega")[0])
         if pkm_name not in self.enemy_team:
-            # print("** Update enemy - Not yet in team")
             for pkm in self.enemy_team.pokemons:
                 pkm.active = False
             pkm = Pokemon(pkm_name, condition, True)
             pkm.load_unknown()
             self.enemy_team.add(pkm)
         else:
-            # print("** Update enemy - Yet in team")
             for pkm in self.enemy_team.pokemons:
                 if pkm.name.lower() == pkm_name.lower():
                     pkm.active = True
