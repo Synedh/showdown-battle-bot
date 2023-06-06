@@ -1,6 +1,6 @@
 import json
 import requests
-from src.senders import sender
+from senders import sender
 
 
 async def log_in(websocket, challid, chall):

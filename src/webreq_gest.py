@@ -37,6 +37,8 @@ async def battle_tag(websocket, message):
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
+            elif current[1] == "-status":
+                battle.update_status_enemy(current[3])
             elif current[1] == "win":
                 await senders.sendmessage(websocket, battles[len(battles) - 1].room_id, "wp")
                 await senders.leaving(websocket, battle.room_id)

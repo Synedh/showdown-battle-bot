@@ -1,7 +1,7 @@
 import json
 
 from ia import make_best_action, make_best_switch
-from pokemon import Pokemon, Team
+from pokemon import Pokemon, Team, Status
 
 import senders
 
@@ -45,12 +45,17 @@ class Battle:
             # for pkm in self.enemy_team.pokemons:
             #     pkm.active = False
 
-    async def faint(self, websocket):
-        self.bot_team.active().condition = "0 fnt"
-        for pokemon in self.bot_team.pokemons:
-            if pokemon.condition != "0 fnt":
-                await self.make_switch(websocket)
-                break
+    def update_status_enemy(self, status):
+        if status == "tox":
+            self.enemy_team.active().status = Status.TOX
+        elif status == "brn":
+            self.enemy_team.active().status = Status.BRN
+        elif status == "par":
+            self.enemy_team.active().status = Status.PAR
+        elif status == "tox":
+            self.enemy_team.active().status = Status.TOX
+        elif status == "slp":
+            self.enemy_team.active().status = Status.SLP
 
     async def make_action(self, websocket):
         await senders.sendmove(websocket, self.room_id, make_best_action(self), self.turn)
