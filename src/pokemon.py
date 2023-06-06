@@ -1,10 +1,11 @@
-from enum import Enum
+import re
 import json
-
+from enum import Enum
+from math import floor
 
 class Status(Enum):
     """
-    Status problem enumeration.
+    Status changes.
     """
     UNK = 0
     PSN = 1
@@ -19,6 +20,7 @@ class Stats(Enum):
     """
     Pokemon stats
     """
+    HP = 'hp'
     ATK = 'atk'
     DEF = 'def'
     SPA = 'spa'
@@ -34,7 +36,7 @@ def infos_for_pokemon(pkm_name: str) -> dict:
     :param pkm_name: Pokemon's name
     :return: Dict. {types, possibleAbilities, baseStats, possibleMoves}
     """
-    pkm_name = pkm_name.lower().replace('-', '').replace(' ', '').replace('%', '').replace('\'', '').replace('.', '')
+    pkm_name = re.sub(r'\W', '', pkm_name.lower())
     res = {
         "types": [],
         "possibleAbilities": [],
@@ -58,20 +60,37 @@ def infos_for_pokemon(pkm_name: str) -> dict:
     return res
 
 
+def stat_calculation(base, level, ev, hp=False):
+    """
+    Calculation of stats based on base stat, level and ev.
+    IVs are maxed, nature is not used.
+    Cannot be used for HP calculation.
+    :param base: Integer, base stat of wanted stat.
+    :param level:  Integer, level of pokemon.
+    :param ev: Integer [0, 252] quantity of ev.
+    :param hp: bool, True if stat is heal points. Default False.
+    :return: Integer, actual stat.
+    """
+    if hp:
+        return floor(((2 * base + 31 + floor(ev / 4)) * level) / 100 + 10)
+    return floor(((2 * base + 31 + floor(ev / 4)) * level) / 100 + 5)
+
+
 class Pokemon:
     """
     Pokemon class.
     Handle everything corresponding to it.
     """
-    def __init__(self, name: str, condition: str, active: str, level: str):
+    def __init__(self, name: str, variant: str, condition: str, active: bool, level: str):
         """
         Init Pokemon method.
         :param name: name of Pokemon.
-        :param condition: ### TODO ###
-        :param active: Bool.
+        :param condition: current life of pokemon ## TODO ##
+        :param active: bool, True if pokemon is currently fighting
         :param level: Stringified int.
         """
         self.name = name
+        self.variant = variant
         self.condition = condition
         self.status = Status.UNK
         self.active = active
@@ -82,23 +101,33 @@ class Pokemon:
         self.stats = {}
         self.moves = []
         self.buff = {
-            "atk": [0, 1],
-            "def": [0, 1],
-            "spa": [0, 1],
-            "spd": [0, 1],
-            "spe": [0, 1],
-            "accuracy": [0, 1],
-            "evasion": [0, 1]
+            Stats.ATK: [0, 1],
+            Stats.DEF: [0, 1],
+            Stats.SPA: [0, 1],
+            Stats.SPD: [0, 1],
+            Stats.SPE: [0, 1],
+            Stats.ACCURACY: [0, 1],
+            Stats.EVASION: [0, 1]
         }
 
     def load_unknown(self):
         """
         Load every information of pokemon from datafiles and store them
         """
-        infos = infos_for_pokemon(self.name)
+        try:
+            infos = infos_for_pokemon(self.variant)
+        except KeyError:
+            infos = infos_for_pokemon(self.name)
         self.types = infos["types"]
         self.abilities = infos["possibleAbilities"]
-        self.stats = infos["baseStats"]
+        self.stats = {
+            Stats.HP: infos["baseStats"]['hp'],
+            Stats.ATK: infos["baseStats"]['atk'],
+            Stats.DEF: infos["baseStats"]['def'],
+            Stats.SPA: infos["baseStats"]['spa'],
+            Stats.SPD: infos["baseStats"]['spd'],
+            Stats.SPE: infos["baseStats"]['spe']
+        }
         self.moves = infos["possibleMoves"]
 
     def load_known(self, abilities: list, item: str, _, moves: list):
@@ -109,23 +138,40 @@ class Pokemon:
         :param stats: Dict. {hp, atk, def, spa, spd, spe}
         :param moves: Array. Not used.
         """
-        infos = infos_for_pokemon(self.name)
+        try:
+            infos = infos_for_pokemon(self.variant)
+        except KeyError:
+            infos = infos_for_pokemon(self.name)
         self.types = infos["types"]
         self.abilities = abilities
         self.item = item
-        self.stats = infos["baseStats"]
-        with open("data/moves.json", encoding='utf8') as data_file:
+        self.stats = {
+            Stats.ATK: infos['baseStats']['atk'],
+            Stats.DEF: infos['baseStats']['def'],
+            Stats.SPA: infos['baseStats']['spa'],
+            Stats.SPD: infos['baseStats']['spd'],
+            Stats.SPE: infos['baseStats']['spe']
+        }
+        with open('data/moves.json', encoding='utf8') as data_file:
             json_file = json.load(data_file)
             for move in moves:
                 self.moves.append(json_file[move.replace('60', '')])
 
-    def buff_affect(self, stat: str) -> int:
+    def buff_affect(self, stat: Stats) -> int:
         """
         Return buff corresponding to stat
-        :param stat: String : ["atk", "def", "spa", "spd", "spe"]
+        :param stat: Stats
         :return: Integer
         """
         return self.buff[stat][1]
+
+    def compute_stat(self, stat: Stats, ev: int = 252) -> int:
+        """
+        Return calculated stats after modificators
+        :param stat: Stats
+        :return: Integer
+        """
+        return stat_calculation(self.stats[stat], self.level, ev) * self.buff_affect(stat)
 
     def __repr__(self) -> int:
         return str(vars(self))
@@ -150,35 +196,33 @@ class Team:
         Return active pokemon of Team
         :return: Pokemon
         """
-        for pkm in self.pokemons:
-            if pkm.active:
-                return pkm
-        return None
+        return next((pkm for pkm in self.pokemons if pkm.active), None)
 
     def add(self, pokemon: Pokemon):
         """
-        Add pokemon ton self.pokemons array. Exit and print error message if Team is full (6 pokemons)
+        Add pokemon ton self.pokemons array.
+        Exit and print error message if Team is full (6 pokemons)
         :param pokemon: Pokemon
         """
-        if len(self.pokemons) < 6:
-            self.pokemons.append(pokemon)
-        else:
-            raise IndexError("Failed to add " + pokemon.name + " : there is yet six pokemon in team :\n" + str(self))
+        if len(self.pokemons) >= 6:
+            raise IndexError(f'Failed to add {pokemon.name}: team is full :\n{self}')
+        self.pokemons.append(pokemon)
 
     def remove(self, pkm_name: str):
         """
-        Remove pokemon from self.pokemons array. Exit and print error message if pkm_name not present in self.pokemons
+        Remove pokemon from self.pokemons array.
+        Exit and print error message if pkm_name not present in self.pokemons
         :param pkm_name: Name of pokemon
         """
         for i, pkm in enumerate(self.pokemons):
-            if pkm_name in pkm.name.lower():
-                if "mega" not in pkm.name.lower():
-                    del self.pokemons[i]
-                return
-        raise NameError("Unable to remove " + pkm_name + " from team :\n" + str(self))
+            if pkm_name == pkm.name:
+                del self.pokemons[i]
+                break
+        else:
+            raise ValueError(f'Unable to remove {pkm_name} from team :\n{self}')
 
     def __contains__(self, pkm_name: str) -> bool:
         return any(pkm.name == pkm_name for pkm in self.pokemons)
 
     def __repr__(self) -> str:
-        return ', '.join([pkm.name for pkm in self.pokemons])
+        return ', '.join(pkm.name for pkm in self.pokemons)

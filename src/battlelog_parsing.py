@@ -1,3 +1,4 @@
+import re
 from src.battle import Battle
 
 
@@ -5,13 +6,12 @@ def major_actions(battle: Battle, command: str, split_line: list[str]):
     match command:
         case "move":
             pass
-        case "switch":
-            if battle.player_id not in split_line[0]:
-                battle.update_enemy(
-                    split_line[1].split(',')[0],
-                    split_line[1].split(',')[1].split('L')[1],
-                    split_line[2]
-                )
+        case "switch" if battle.player_id not in split_line[0]:
+            # Enemy pokemon has switched in
+            print('|'.join(split_line[0:2]))
+            regex = re.compile(r'p\da: (.*?)\|(.*?), (?:L(\d+), )?.*')
+            name, variant, level = regex.match('|'.join(split_line[0:2])).groups()
+            battle.update_enemy(name, split_line[2], variant, level if level else '100')
         case "swap":
             pass
         case "detailschange":
@@ -20,14 +20,6 @@ def major_actions(battle: Battle, command: str, split_line: list[str]):
             pass
         case "faint":
             pass
-        case "poke":
-            if battle.player_id not in split_line[0]:
-                pkm = split_line[1].split(', ')
-                battle.update_enemy(
-                    pkm[0],
-                    pkm[1][1:] if len(pkm) > 1 and 'L' in pkm[1] else '100',
-                    100
-                )
         case _:
             pass
 
@@ -36,38 +28,27 @@ def minor_actions(battle: Battle, command: str, split_line: list[str]):
     match command:
         case "-fail":
             pass
-        case "-damage":
-            pass
+        case "-damage" if battle.player_id not in split_line[0]:
+            name = re.match(r'p\da: (.*)', split_line[0]).group(1)
+            battle.update_enemy(name, split_line[1])
         case "-heal":
             pass
         case "-status":
-            if battle.player_id in split_line[0]:
-                battle.update_status(battle.bot_team.active(), split_line[1])
-            else:
-                battle.update_status(battle.enemy_team.active(), split_line[1])
+            battle.update_status(battle.get_team(split_line[0]).active(), split_line[1])
         case "-curestatus":
-            if battle.player_id in split_line[0]:
-                battle.update_status(battle.bot_team.active())
-            else:
-                battle.update_status(battle.enemy_team.active())
+            battle.update_status(battle.get_team(split_line[0]).active())
         case "-cureteam":
             pass
         case "-boost":
-            if battle.player_id in split_line[0]:
-                battle.set_buff(battle.bot_team.active(), split_line[1], int(split_line[2]))
-            else:
-                battle.set_buff(battle.enemy_team.active(), split_line[1], int(split_line[2]))
+            battle.set_buff(battle.get_team(split_line[0]).active(), split_line[1], int(split_line[2]))
         case "-unboost":
-            if battle.player_id in split_line[0]:
-                battle.set_buff(battle.bot_team.active(), split_line[1], - int(split_line[2]))
-            else:
-                battle.set_buff(battle.enemy_team.active(), split_line[1], - int(split_line[2]))
+            battle.set_buff(battle.get_team(split_line[0]).active(), split_line[1], - int(split_line[2]))
         case "-weather":
-            pass
+            battle.weather = split_line[0]
         case "-fieldstart":
-            pass
+            battle.fields.append(split_line[0])
         case "-fieldend":
-            pass
+            battle.fields.remove(split_line[0])
         case "-sidestart":
             if "Reflect" in split_line[1] or "Light Screen" in split_line[1]:
                 battle.screens[split_line[1].split(":")[1].lower().replace(" ", "")] = True
@@ -85,15 +66,9 @@ def minor_actions(battle: Battle, command: str, split_line: list[str]):
         case "-immune":
             pass
         case "-item":
-            if battle.player_id in split_line[0]:
-                battle.bot_team.active().item = split_line[1].lower().replace(" ", "")
-            else:
-                battle.enemy_team.active().item = split_line[1].lower().replace(" ", "")
+            battle.get_team(split_line[0]).active().item = split_line[1].lower().replace(" ", "")
         case "-enditem":
-            if battle.player_id not in split_line[0]:
-                battle.bot_team.active().item = None
-            else:
-                battle.enemy_team.active().item = None
+            battle.get_team(split_line[0]).active().item = None
         case "-ability":
             pass
         case "-endability":
