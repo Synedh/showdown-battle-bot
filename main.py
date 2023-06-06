@@ -7,10 +7,6 @@ from login import log_in
 from state import Battle
 import senders
 
-from pokemon import Pokemon
-from ia import effi_pkm
-
-
 battles = []
 
 
@@ -82,12 +78,3 @@ async def main():
             await stringing(websocket, message)
 
 asyncio.get_event_loop().run_until_complete(main())
-
-# def test():
-#     pokemon = Pokemon("dragonite", None, True)
-#     pokemon.load_unknown()
-#     pkm_adv = Pokemon("shiinotic", None, True)
-#     pkm_adv.load_unknown()
-#     print(effi_pkm(pkm_adv, pokemon))
-#
-# test()

@@ -17,6 +17,7 @@ class Battle:
     def req_loader(self, req):
         jsonobj = json.loads(req)
         if "wait" in jsonobj.keys():
+            self.turn += 1
             return
         if "forceSwitch" in jsonobj.keys():
             return
@@ -45,8 +46,9 @@ class Battle:
             #     pkm.active = False
 
     async def make_move(self, websocket, turn):
-        self.turn = turn
-        await senders.sendmove(websocket, self.room_id, make_best_action(self), turn)
+        self.turn += 1
+        await senders.sendmove(websocket, self.room_id, make_best_action(self), self.turn)
 
     async def make_switch(self, websocket):
+        self.turn += 1
         await senders.sendswitch(websocket, self.room_id, make_best_switch(self), self.turn)
