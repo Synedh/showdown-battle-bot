@@ -5,8 +5,10 @@ from src.battle import Battle
 from src import senders
 
 battles = []
-nb_fights = 2
-nb_fights_done = 0
+nb_fights_max = 3
+nb_fights_simu_max = 2
+nb_fights = 0
+
 formats = [
     "gen7randombattle",
     "gen7monotyperandombattle",
@@ -77,6 +79,7 @@ async def battle_tag(websocket, message):
             elif current[1] == "win":
                 await senders.sendmessage(websocket, battle.battletag, "wp")
                 await senders.leaving(websocket, battle.battletag)
+                battles.remove(battle)
             elif current[1] == "c":
                 # This is a message
                 pass
@@ -90,21 +93,30 @@ async def stringing(websocket, message):
     :param websocket: Websocket stream.
     :param message: Message received from server. Format : room|message1|message2.
     """
+    global nb_fights_max
     global nb_fights
-    global nb_fights_done
+    global nb_fights_simu_max
+    global battles
     global formats
 
     string_tab = message.split('|')
     if string_tab[1] == "challstr":
         # Si la challstr a  été encoyee, on peut se connecter
         await log_in(websocket, string_tab[2], string_tab[3])
-    elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot" or string_tab[1] == "deinit":
+    elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
-        pass
-        # if nb_fights_done < nb_fights:
-        #     await senders.searching(websocket)
-        #     nb_fights_done += 1
+        # pass
+        await senders.searching(websocket)
+        nb_fights += 1
         # await senders.challenge(websocket, "Synedh")
+    elif string_tab[1] == "deinit":
+        if nb_fights < nb_fights_max:
+            await senders.searching(websocket)
+            nb_fights += 1
+    elif "|gametype|" in message:
+        if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
+            await senders.searching(websocket)
+            nb_fights += 1
     elif "updatechallenges" in string_tab[1]:
         # Si quelqu'un envoie un challenge, alors accepter
         try:
@@ -117,6 +129,7 @@ async def stringing(websocket, message):
                                          + ", Sorry, I accept only solo randomized metas.")
         except KeyError:
             pass
-    elif "battle" in string_tab[0]:
+
+    if "battle" in string_tab[0]:
         # Si on recoit un message dans une interface de combat
         await battle_tag(websocket, message)
