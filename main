@@ -22,13 +22,15 @@ def test():
     from src.pokemon import Pokemon
     from src.move_efficiency import effi_move
 
-    pkm1 = Pokemon("Abomasnow", "", True, 100)
+    pkm1 = Pokemon("Golem", "", True, 100)
     pkm1.load_unknown()
-    pkm2 = Pokemon("Abomasnow", "", True, 100)
+    pkm2 = Pokemon("Latios", "", True, 100)
     pkm2.load_unknown()
 
-    print(pkm1.moves[1])
-    print(effi_move(pkm1.moves[1], pkm1, pkm2, []))
+    # print(pkm1.moves)
+    for move in pkm1.moves:
+        print(move["name"])
+    print(effi_move(pkm1.moves[3], pkm1, pkm2, []))
 
 
 if __name__ == "__main__":

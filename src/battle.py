@@ -87,13 +87,6 @@ class Battle:
         else:
             pokemon.status = Status.UNK
 
-    def set_enemy_item(self, item):
-        """
-        Set enemy item.
-        :param item: Item string.
-        """
-        self.enemy_team.active().item = item
-
     @staticmethod
     def set_buff(pokemon, stat, quantity):
         """

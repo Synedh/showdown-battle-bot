@@ -3,16 +3,17 @@ import json
 from src.pokemon import Status
 
 
-def stat_calculation(base, level):
+def stat_calculation(base, level, ev):
     """
     Calculation of stats based on base stat and level.
     IV and EV are maxed, nature is not used.
     Cannot be used for HP calculation.
     :param base: Integer, base stat of wanted stat
     :param level:  Integer, level of pokemon
+    :param ev: Integer [0, 252] quantity of ev.
     :return: Integer, actual stat
     """
-    return int(abs(((2 * base + 31 + 63) * level) / 100 + 5))
+    return int(((2 * base + 31 + ev / 4) * level) / 100 + 5)
 
 
 def efficiency(elem: str, elems: [str]):
@@ -36,6 +37,51 @@ def efficiency(elem: str, elems: [str]):
     return res
 
 
+def item_modificator(move, pkm1, pkm2):
+    mod = 1
+    if pkm1.item == "lifeorb":
+        mod *= 1.3
+    elif pkm1.item == "expertbelt" and efficiency(move["type"], pkm2.types) > 1:
+        mod *= 1.2
+    elif pkm1.item == "choicespecs" and move["category"] == "Special":
+        mod *= 1.5
+    elif pkm1.item == "choiceband" and move["category"] == "Physical":
+        mod *= 1.5
+    elif pkm1.item == "thickclub" and move["category"] == "Physical":
+        mod *= 1.5
+
+    if pkm2.item == "airballoon":
+        mod = 0
+    return mod
+
+
+def ability_modificator(move, pkm1, pkm2):
+    mod = 1
+    if "Tinded Lens" in pkm1.abilities and efficiency(move["type"], pkm2.types) < 1:
+        mod *= 2
+
+    if "Fluffy" in pkm2.abilities:
+        if "contact" in move["flags"].keys():
+            mod *= 0.5
+        elif move["type"] == "Fire" and "contact" not in move["flags"].keys():
+            mod *= 2
+    elif "Solid Rock" in pkm2.abilities and efficiency(move["type"], pkm2.types) > 1:
+        mod *= 0.75
+    elif "Filter" in pkm2.abilities and efficiency(move["type"], pkm2.types) > 1:
+        mod *= 0.75
+    elif "Prism Armor" in pkm2.abilities and efficiency(move["type"], pkm2.types) > 1:
+        mod *= 0.75
+    elif "Levitate" in pkm2.abilities and move["type"] == "Ground":
+        mod = 0
+    elif "Water Absorb" in pkm2.abilities and move["type"] == "Water":
+        mod = 0
+    elif "Volt Absorb" in pkm2.abilities and move["type"] == "Electric":
+        mod = 0
+    elif "Flash Fire" in pkm2.abilities and move["type"] == "Fire":
+        mod = 0
+    return mod
+
+
 def damage_calculation(move, pkm1, pkm2):
     """
     Damage move calculation.
@@ -45,18 +91,16 @@ def damage_calculation(move, pkm1, pkm2):
     :return: Integer, damage of move [0, +oo].
     """
     category = ("spa", "spd") if move['category'] == "Special" else ("atk", "def")
-    atk = stat_calculation(pkm1.stats[category[0]], pkm1.level) * pkm1.buff_affect(category[0])
-    defe = stat_calculation(pkm2.stats[category[1]], pkm2.level) * pkm2.buff_affect(category[1])
+    atk = stat_calculation(pkm1.stats[category[0]], pkm1.level, 252) * pkm1.buff_affect(category[0])
+    defe = stat_calculation(pkm2.stats[category[1]], pkm2.level, 0) * pkm2.buff_affect(category[1])
     stab = 1.5 if move["type"] in pkm1.types else 1
     power = move["basePower"]
     effi = efficiency(move["type"], pkm2.types)
-    mod1 = 0.5 if pkm1.status == Status.BRN else 1
-    mod2 = 1.3 if pkm1.item == "lifeorb" else 1
-    mod3 = 1.2 if pkm1.item == "expertbelt" and effi > 1 else 1
-    print("((((((((" + str(pkm1.level) + " * 2 / 5) + 2) * " + str(power) + " * " + str(atk) + " / 50) / "
-          + str(defe) + ") * " + str(mod1) + ") / 2) * " + str(mod2) + ") * " + str(stab) + " * " + str(effi)
-          + " * " + str(mod3) + ")")
-    return ((((((((pkm1.level * 2 / 5) + 2) * power * atk / 50) / defe) * mod1) / 2) * mod2) * stab * effi * mod3)
+    burn = 0.5 if pkm1.status == Status.BRN else 1
+    item_mod = item_modificator(move, pkm1, pkm2)
+    ability_mod = ability_modificator(move, pkm1, pkm2)
+    return int(str(int(str(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2).split('.')[0])
+        * stab * effi * burn * item_mod * ability_mod).split('.')[0])
 
 
 def effi_boost(move, pkm1, pkm2):
@@ -146,22 +190,5 @@ def effi_move(move, pkm1, pkm2, team):
             or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
         return 0
 
-    # effi = damage_calculation(move, pkm1, pkm2)
-
-    effi = efficiency(move["type"], pkm2.types) * move["basePower"]
-    if move["type"] in pkm1.types:
-        effi *= 1.5
-    if pkm1.item == "lifeorb":
-        effi *= 1.3
-    elif pkm1.item == "choicespecs" or pkm1.item == "choiceband":
-        effi *= 1.5
-    elif pkm1.item == "expertbelt" and efficiency(move["type"], pkm2.types) > 1:
-        effi *= 1.2
-    elif pkm1.item == "thickclub":
-        effi *= 2
-
-    if move["category"] == "Special":
-        effi *= pkm1.buff_affect("spa") / pkm2.buff_affect("spd")
-    elif move["category"] == "Physical":
-        effi *= pkm1.buff_affect("atk") / pkm2.buff_affect("def")
+    effi = damage_calculation(move, pkm1, pkm2)
     return effi
