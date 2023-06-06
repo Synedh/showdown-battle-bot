@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import asyncio
-import websockets
 from datetime import datetime
+import websockets
 
 from src.senders import Sender
 from src.io_process import stringing, Usage
@@ -19,24 +19,24 @@ async def main():
             await stringing(message, Usage.STANDBY)
 
 
-def test():
-    """
-    Test function. Allow to test damages calculation between two pokemons.
-    """
-    from src.pokemon import Pokemon, Status
-    from src.move_efficiency import effi_move
+# def test():
+#     """
+#     Test function. Allow to test damages calculation between two pokemons.
+#     """
+#     from src.pokemon import Pokemon, Status
+#     from src.move_efficiency import effi_move
 
-    pkm1 = Pokemon("Abomasnow", "", True, 100)
-    # pkm1.status = Status.BRN
-    pkm1.load_unknown()
-    pkm2 = Pokemon("Abomasnow", "", True, 100)
-    # pkm2.item = "airballoon"
-    pkm2.load_unknown()
+#     pkm1 = Pokemon("Abomasnow", "", True, 100)
+#     # pkm1.status = Status.BRN
+#     pkm1.load_unknown()
+#     pkm2 = Pokemon("Abomasnow", "", True, 100)
+#     # pkm2.item = "airballoon"
+#     pkm2.load_unknown()
 
-    # print(pkm1.moves)
-    for move in pkm1.moves:
-        print(move["name"])
-    print(effi_move(pkm1.moves[7], pkm1, pkm2, []))
+#     # print(pkm1.moves)
+#     for move in pkm1.moves:
+#         print(move["name"])
+#     print(effi_move(pkm1.moves[7], pkm1, pkm2, []))
 
 
 if __name__ == "__main__":

@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
 import time
 from enum import Enum
-from xmlrpc.client import Boolean
 
-from src import senders
+from src.senders import Sender
 from src.battlelog_parsing import battlelog_parsing
 from src.login import log_in, USERNAME, OWNER
 from src.battle import Battle
 
-battles = []
-nb_fights_max = 1
-nb_fights_simu_max = 1
-nb_fights = 0
+BATTLES = []
+NB_FIGHTS_MAX = 1
+NB_FIGHTS_SIMU_MAX = 1
+NB_FIGHTS = 0
 
 formats = [
     "gen8randombattle",
@@ -28,7 +27,7 @@ class Usage(Enum):
     SEARCH = 2
 
 
-def check_battle(battle_list, battletag) -> Battle or None:
+def check_battle(battle_list: list[Battle], battletag: str) -> Battle|None:
     """
     Get Battle corresponding to room_id.
     :param battle_list: Array of Battles.
@@ -42,7 +41,7 @@ def check_battle(battle_list, battletag) -> Battle or None:
 
 
 def log_battle_result(win: bool):
-    with open("log.txt", "r+") as file:
+    with open("log.txt", "r+", encoding='utf8') as file:
         nb_win, nb_loose, total = file.read().split('/')
         file.seek(0)
         if win:
@@ -52,17 +51,16 @@ def log_battle_result(win: bool):
 
 
 
-async def battle_tag(message, usage):
+async def battle_tag(message: str, usage: Usage):
     """
     Main in fuction. Filter every message sent by server and launch corresponding function.
     :param websocket: Websocket stream.
-    :param message: Message received from server. Format : room|message1|message2.
-    :param usage: 0: Only recieving. 1 Challenging Synedh. 2 searching random battles.
+    :param message: Message received from server. Format : room|message|...
+    :param usage: Bot usage : standby, challenging owner, searching random battles.
     """
-    global battles
     lines = message.splitlines()
-    battle = check_battle(battles, lines[0].split("|")[0].split(">")[1])
-    sender = senders.Sender()
+    battle = check_battle(BATTLES, lines[0].split("|")[0].split(">")[1])
+    sender = Sender()
     for line in lines[1:]:
         current = line.split('|')
         if len(current) < 2:
@@ -73,7 +71,7 @@ async def battle_tag(message, usage):
                 case 'init':
                     # Creation de la bataille
                     battle = Battle(lines[0].split("|")[0].split(">")[1])
-                    battles.append(battle)
+                    BATTLES.append(battle)
                     await sender.send(battle.battletag, "Hi")
                     await sender.send(battle.battletag, "/timer on")
                 case 'player' if other[1] == USERNAME:
@@ -97,27 +95,27 @@ async def battle_tag(message, usage):
                 case "win":
                     await sender.send(battle.battletag, "wp")
                     await sender.leaving(battle.battletag)
-                    battles.remove(battle)
+                    BATTLES.remove(battle)
                     if usage == Usage.SEARCH:
                         log_battle_result(USERNAME in other[0])
                 case _:
                     # Send to battlelog parser.
                     battlelog_parsing(battle, command, other)
-        except Exception as e:
+        except Exception as exception:
             await sender.send(battle.battletag, 'Sorry, I crashed.')
             await sender.forfeit(battle.battletag)
             time.sleep(1)
-            raise e
+            raise exception
 
 
-async def private_message(user, _, content, *other):
+async def private_message(user: str, _, content: str, *other: str):
     """
     Handle private message commands.
     :param sender: Sender of the private message.
     :param content: Message sent by user.
     :param other: Other informations sent with pipes.
     """
-    sender = senders.Sender()
+    sender = Sender()
 
     if content.startswith('.'):
         if content == '.help':
@@ -127,7 +125,7 @@ async def private_message(user, _, content, *other):
             await sender.send('', f'/pm {user}, Unknown command, type ".help" for help.')
     elif content.startswith('/challenge'):
         # If somebody challenges the bot
-        if not len(other):
+        if len(other) == 0:
             # Bot challenge rejected.
             pass
         elif other[0] in formats:
@@ -138,14 +136,15 @@ async def private_message(user, _, content, *other):
 
 
 
-async def stringing(message, usage=Usage.STANDBY):
+async def stringing(message: str, usage: Usage = Usage.STANDBY):
     """
     First filtering function on received messages.
     Handle challenge and research actions.
     :param message: Message received from server. Format : room|message1|message2.
     :param usage: 0: Only recieving. 1 Challenging Synedh. 2 searching random battles.
     """
-    sender = senders.Sender()
+    global NB_FIGHTS
+    sender = Sender()
     room, command, *content = message.split('|')
 
     match command:
@@ -158,21 +157,21 @@ async def stringing(message, usage=Usage.STANDBY):
         case 'updateuser' if USERNAME in content[0] and usage == Usage.SEARCH:
             # Logged in and search battle.
             await sender.searching(formats[0])
-            nb_fights += 1
-        case 'deinit' if Usage.SEARCH and nb_fights < nb_fights_max:
+            NB_FIGHTS += 1
+        case 'deinit' if Usage.SEARCH and NB_FIGHTS < NB_FIGHTS_MAX:
             # If previous fight is over, we're in search usage and it remains fights
             await sender.searching(formats[0])
-            nb_fights += 1
-        case 'deinit' if Usage.SEARCH and nb_fights >= nb_fights_max and len(battles) == 0:
+            NB_FIGHTS += 1
+        case 'deinit' if Usage.SEARCH and NB_FIGHTS >= NB_FIGHTS_MAX and len(BATTLES) == 0:
             # If previous fight is over, we're in search usage and it don't remains fights
             exit(0)
         case 'pm' if USERNAME not in content[0]:
             await private_message(*content)
         case _ if '|inactive|Battle timer is ON:' in message and usage == Usage.SEARCH:
             # If previous fight has started and we can do more simultaneous fights and we're in search usage.
-            if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
+            if len(BATTLES) < NB_FIGHTS_SIMU_MAX and NB_FIGHTS < NB_FIGHTS_MAX:
                 await sender.searching(formats[0])
-                nb_fights += 1
+                NB_FIGHTS += 1
     if "battle" in room:
         # Battle concern message.
         await battle_tag(message, usage)

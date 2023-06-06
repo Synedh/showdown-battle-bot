@@ -15,7 +15,20 @@ class Status(Enum):
     FRZ = 6
 
 
-def infos_for_pokemon(pkm_name):
+class Stats(Enum):
+    """
+    Pokemon stats
+    """
+    ATK = 'atk'
+    DEF = 'def'
+    SPA = 'spa'
+    SPD = 'spd'
+    SPE = 'spe'
+    ACCURACY = 'accuracy'
+    EVASION = 'evasion'
+
+
+def infos_for_pokemon(pkm_name: str) -> dict:
     """
     Filtrate, regroup and translate data from json files.
     :param pkm_name: Pokemon's name
@@ -28,17 +41,17 @@ def infos_for_pokemon(pkm_name):
         "baseStats": {},
         "possibleMoves": []
     }
-    with open('data/pokedex.json') as data_file:
+    with open('data/pokedex.json', encoding='utf8') as data_file:
         pokemon = json.load(data_file)[pkm_name]
     res["types"] = pokemon["types"]
     res["possibleAbilities"] = list(pokemon["abilities"].values())
     res["baseStats"] = pokemon["baseStats"]
-    with open('data/formats-data.json') as data_file:
+    with open('data/formats-data.json', encoding='utf8') as data_file:
         try:
             pokemon_moves = json.load(data_file)[pkm_name]["randomBattleMoves"]
         except KeyError:
             pokemon_moves = []
-    with open("data/moves.json") as data_file:
+    with open("data/moves.json", encoding='utf-8') as data_file:
         moves = json.load(data_file)
     for move in pokemon_moves:
         res["possibleMoves"].append(moves[move])
@@ -50,12 +63,13 @@ class Pokemon:
     Pokemon class.
     Handle everything corresponding to it.
     """
-    def __init__(self, name, condition, active, level):
+    def __init__(self, name: str, condition: str, active: str, level: str):
         """
         Init Pokemon method.
         :param name: name of Pokemon.
         :param condition: ### TODO ###
         :param active: Bool.
+        :param level: Stringified int.
         """
         self.name = name
         self.condition = condition
@@ -87,7 +101,7 @@ class Pokemon:
         self.stats = infos["baseStats"]
         self.moves = infos["possibleMoves"]
 
-    def load_known(self, abilities, item, stats, moves):
+    def load_known(self, abilities: list, item: str, _, moves: list):
         """
         Load ever information of pokemon from datafiles, but use only some of them.
         :param abilities: String. Ability of pokemon.
@@ -100,12 +114,12 @@ class Pokemon:
         self.abilities = abilities
         self.item = item
         self.stats = infos["baseStats"]
-        with open("data/moves.json") as data_file:
+        with open("data/moves.json", encoding='utf8') as data_file:
             json_file = json.load(data_file)
             for move in moves:
                 self.moves.append(json_file[move.replace('60', '')])
 
-    def buff_affect(self, stat):
+    def buff_affect(self, stat: str) -> int:
         """
         Return buff corresponding to stat
         :param stat: String : ["atk", "def", "spa", "spd", "spe"]
@@ -113,7 +127,7 @@ class Pokemon:
         """
         return self.buff[stat][1]
 
-    def __repr__(self):
+    def __repr__(self) -> int:
         return str(vars(self))
 
 
@@ -122,7 +136,7 @@ class Team:
     Team class.
     Contain pokemon list.
     """
-    def __init__(self, *pkms):
+    def __init__(self, *pkms: list[Pokemon]):
         """
         init Team method
         :param pkms: Array of pokemons. Can be empty, Cannot contain more than six pokemon.
@@ -131,7 +145,7 @@ class Team:
         for pkm in pkms:
             self.add(pkm)
 
-    def active(self):
+    def active(self) -> Pokemon|None:
         """
         Return active pokemon of Team
         :return: Pokemon
@@ -141,7 +155,7 @@ class Team:
                 return pkm
         return None
 
-    def add(self, pokemon):
+    def add(self, pokemon: Pokemon):
         """
         Add pokemon ton self.pokemons array. Exit and print error message if Team is full (6 pokemons)
         :param pokemon: Pokemon
@@ -151,7 +165,7 @@ class Team:
         else:
             raise IndexError("Failed to add " + pokemon.name + " : there is yet six pokemon in team :\n" + str(self))
 
-    def remove(self, pkm_name):
+    def remove(self, pkm_name: str):
         """
         Remove pokemon from self.pokemons array. Exit and print error message if pkm_name not present in self.pokemons
         :param pkm_name: Name of pokemon
@@ -163,8 +177,8 @@ class Team:
                 return
         raise NameError("Unable to remove " + pkm_name + " from team :\n" + str(self))
 
-    def __contains__(self, pkm_name: str):
+    def __contains__(self, pkm_name: str) -> bool:
         return any(pkm.name == pkm_name for pkm in self.pokemons)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return ', '.join([pkm.name for pkm in self.pokemons])

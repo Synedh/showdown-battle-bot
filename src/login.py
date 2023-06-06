@@ -1,17 +1,18 @@
-import sys
 import json
-import requests
 import configparser
+from pathlib import Path
+import requests
 
 from src.senders import Sender
 
+
 config = configparser.ConfigParser()
-config.read(f'{sys.path[0]}/config.ini')
+config.read(Path('.').parent.absolute() / 'config.ini')
 USERNAME = config['bot']['username']
 PASSWORD = config['bot']['password']
 OWNER = config['bot']['owner']
 
-async def log_in(challid, chall):
+async def log_in(challid: str, chall: str):
     """
     Login in function. Send post request to showdown server.
     :param websocket: Websocket stream

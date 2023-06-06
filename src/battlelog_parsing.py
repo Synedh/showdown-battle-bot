@@ -1,13 +1,17 @@
 from src.battle import Battle
 
 
-def major_actions(battle: Battle, command: str, split_line):
+def major_actions(battle: Battle, command: str, split_line: list[str]):
     match command:
         case "move":
             pass
         case "switch":
             if battle.player_id not in split_line[0]:
-                battle.update_enemy(split_line[1].split(',')[0], split_line[1].split(',')[1].split('L')[1], split_line[2])
+                battle.update_enemy(
+                    split_line[1].split(',')[0],
+                    split_line[1].split(',')[1].split('L')[1],
+                    split_line[2]
+                )
         case "swap":
             pass
         case "detailschange":
@@ -19,12 +23,16 @@ def major_actions(battle: Battle, command: str, split_line):
         case "poke":
             if battle.player_id not in split_line[0]:
                 pkm = split_line[1].split(', ')
-                battle.update_enemy(pkm[0], pkm[1][1:] if len(pkm) > 1 and 'L' in pkm[1] else '100', 100)
+                battle.update_enemy(
+                    pkm[0],
+                    pkm[1][1:] if len(pkm) > 1 and 'L' in pkm[1] else '100',
+                    100
+                )
         case _:
             pass
 
 
-def minor_actions(battle: Battle, command: str, split_line):
+def minor_actions(battle: Battle, command: str, split_line: list[str]):
     match command:
         case "-fail":
             pass
@@ -106,7 +114,7 @@ def minor_actions(battle: Battle, command: str, split_line):
             pass
 
 
-def battlelog_parsing(battle: Battle, command: str, split_line):
+def battlelog_parsing(battle: Battle, command: str, split_line: list[str]):
     if command.startswith('-'):
         minor_actions(battle, command, split_line)
     else:
