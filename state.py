@@ -30,9 +30,16 @@ class Battle:
         print("** Set bot id : " + player_id)
 
     def update_enemy(self, pkm_name, condition):
+        if pkm_name not in self.enemy_team:
+            for pkm in self.enemy_team.pokemons:
+                pkm.set_activity(False)
+            pkm = Pokemon(pkm_name, condition, True)
+            pkm.load_unknown()
+            self.enemy_team.add(pkm)
+        else:
+            pass
         print("** Update enemy : " + pkm_name)
-        pass
 
-    async def makeMove(self, websocket, turn):
+    async def make_move(self, websocket, turn):
         await senders.sendmessage(websocket, self.room_id, "Coucou.")
         print("** Start searching, turn : " + turn)

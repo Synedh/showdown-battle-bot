@@ -15,9 +15,9 @@ class Status(Enum):
 def infos_for_pokemon(pkm_name):
     pkm_name = pkm_name.lower()
     if "rotom" in pkm_name \
-            or "wormadam" in pkm_name \
-            or "lycanroc" in pkm_name \
-            or "arceus" in pkm_name \
+            or "wormadam-" in pkm_name \
+            or "lycanroc-" in pkm_name \
+            or "arceus-" in pkm_name \
             or "alola" in pkm_name \
             or "origin" in pkm_name\
             or "zygarde-" in pkm_name\
@@ -71,15 +71,15 @@ class Pokemon:
     def set_status(self, status):
         self.status = status
 
+    def set_activity(self, active):
+        self.active = active
+
+
 class Team:
-    def __init__(self, p1=None, p2=None, p3=None, p4=None, p5=None, p6=None):
+    def __init__(self, *pkms):
         self.pokemons = []
-        if p1: self.pokemons.append(p1)
-        if p2: self.pokemons.append(p2)
-        if p3: self.pokemons.append(p3)
-        if p4: self.pokemons.append(p4)
-        if p5: self.pokemons.append(p5)
-        if p6: self.pokemons.append(p6)
+        for pkm in pkms:
+            self.add(pkm)
 
     def add(self, pokemon):
         if len(self.pokemons) < 6:
@@ -87,6 +87,13 @@ class Team:
         else:
             print("Error : There is yet six pokemon in the team")
             exit()
+
+    def __contains__(self, pkm_name: str):
+        for pkm in self.pokemons:
+            if pkm.name == pkm_name:
+                return True
+        return False
+
     def __repr__(self):
         for pkm in self.pokemons:
             print(vars(pkm))
