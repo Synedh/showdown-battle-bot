@@ -59,6 +59,9 @@ class Battle:
         elif status == "slp":
             self.enemy_team.active().status = Status.SLP
 
+    def set_enemy_item(self, item):
+        self.enemy_team.active().item = item
+
     async def make_move(self, wensocket):
         if "canMegaEvo" in self.current_pkm[0]:
             await senders.sendmove(wensocket, self.room_id, str(make_best_move(self)[0]) + " mega", self.turn)

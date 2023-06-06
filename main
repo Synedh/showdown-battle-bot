@@ -2,9 +2,7 @@
 
 import websockets
 import asyncio
-import sys
-from src.webreq_gest import stringing
-from src.senders import SILENCE
+from src.io_process import stringing
 
 async def main():
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:

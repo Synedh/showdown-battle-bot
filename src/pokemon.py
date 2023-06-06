@@ -95,8 +95,9 @@ class Team:
 
     def remove(self, pkm_name):
         for i, pkm in enumerate(self.pokemons):
-            if pkm.name.lower() == pkm_name:
-                del self.pokemons[i]
+            if pkm_name in pkm.name.lower():
+                if "mega" not in pkm.name.lower():
+                    del self.pokemons[i]
                 return
         print("\033[31m" + "Error : Unable to remove " + pkm_name + " from team :\n" + str(self) + "\033[0m")
         exit()

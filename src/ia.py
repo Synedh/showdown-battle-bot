@@ -20,6 +20,8 @@ def efficiency(elem: str, elems: [str]):
 
 def effi_status(move, pkm1, pkm2, team):
     if move["id"] in ["toxic", "poisonpowder"]:
+        if "Poison" in pkm2.types:
+            return 0
         return 100
     elif move["id"] in ["thunderwave", "stunspore", "glare"]:
         if "Electric" in pkm2.types or "Ground" in pkm2.types:
@@ -37,6 +39,10 @@ def effi_status(move, pkm1, pkm2, team):
         for pkm in team.pokemons:  # Sleep clause
             if pkm.status == Status.SLP:
                 return 0
+        if move["id"] in ["spore", "sleeppowder"] and "Grass" in pkm2.types \
+                or "Vital Spirit" in pkm2.abilities \
+                or "Insomnia" in pkm2.abilities:
+            return 0
         return 200
 
 
@@ -60,7 +66,11 @@ def effi_move(move, pkm1, pkm2, team):
         effi *= 1.5
     elif pkm1.item == "expertbelt" and efficiency(move["type"], pkm2.types) > 1:
         effi *= 1.2
-    if move["type"] == "ground" and "evitate" in pkm2.abilities:
+    elif pkm1.item == "thickclub":
+        effi *= 2
+    if (move["type"] == "Ground" and ("Levitate" in pkm2.abilities or pkm2.item == "Air Balloon")
+            or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
+            or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
         effi = 0
     return effi
 
@@ -106,6 +116,11 @@ def make_best_move(battle):
     enemy_pkm = battle.enemy_team.active()
     best_move = (None, -1)
 
+    if len(pokemon_moves) == 1:  # Case Outrage, Mania, Phantom Force, etc.
+        for move in pokemon.moves:
+            if move["name"] == pokemon_moves[0]["move"]:
+                return 1, effi_move(move, pokemon, enemy_pkm, battle.enemy_team)
+
     for i, move in enumerate(pokemon.moves):
         if "disabled" in pokemon_moves[i].keys() and pokemon_moves[i]["disabled"]:
             continue
@@ -131,8 +146,7 @@ def make_best_action(battle):
 
     switch = make_best_switch(battle)
     if (switch[1] > effi_pkm(bot_pkm, enm_pkm, battle.enemy_team)
-        and (best_enm_atk > 150 and bot_pkm.stats["spe"] - enm_pkm.stats["spe"] < 10
-        or best_bot_atk < 100)
-        and switch[0]):
+        and (best_enm_atk > 150 and bot_pkm.stats["spe"] - enm_pkm.stats["spe"] < 10 or best_bot_atk < 100)
+            and switch[0]):
         return "switch", switch[0]
     return "move", make_best_move(battle)[0]

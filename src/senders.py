@@ -1,12 +1,8 @@
-SILENCE = False
-
 async def sender(websocket, room, message1, message2=None):
     if message2:
         string = room + '|' + message1 + '|' + message2
     else:
         string = room + '|' + message1
-    global SILENCE
-    if not SILENCE:
         print('>> {}'.format(string))
     await websocket.send(string)
 
