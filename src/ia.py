@@ -54,6 +54,14 @@ def effi_move(move, pkm1, pkm2, team):
     effi = efficiency(move["type"], pkm2.types) * move["basePower"]
     if move["type"] in pkm1.types:
         effi *= 1.5
+    if pkm1.item == "lifeorb":
+        effi *= 1.3
+    elif pkm1.item == "choicespecs" or pkm1.item == "choiceband":
+        effi *= 1.5
+    elif pkm1.item == "expertbelt" and efficiency(move["type"], pkm2.types) > 1:
+        effi *= 1.2
+    if move["type"] == "ground" and "evitate" in pkm2.abilities:
+        effi = 0
     return effi
 
 
@@ -123,7 +131,8 @@ def make_best_action(battle):
 
     switch = make_best_switch(battle)
     if (switch[1] > effi_pkm(bot_pkm, enm_pkm, battle.enemy_team)
-        and best_enm_atk > 150 and bot_pkm.stats["spe"] - enm_pkm.stats["spe"] < 10
+        and (best_enm_atk > 150 and bot_pkm.stats["spe"] - enm_pkm.stats["spe"] < 10
+        or best_bot_atk < 100)
         and switch[0]):
         return "switch", switch[0]
     return "move", make_best_move(battle)[0]

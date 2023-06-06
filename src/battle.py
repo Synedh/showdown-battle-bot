@@ -21,7 +21,7 @@ class Battle:
         self.bot_team = Team()
         for pkm in objteam:
             newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'])
-            newpkm.load_known([pkm['baseAbility']], pkm['stats'], pkm['moves'])
+            newpkm.load_known([pkm['baseAbility']], pkm["item"], pkm['stats'], pkm['moves'])
             self.bot_team.add(newpkm)
         if "forceSwitch" in jsonobj.keys():
             await self.make_switch(websocket)
