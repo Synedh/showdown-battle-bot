@@ -1,7 +1,7 @@
 import json
 
 from pokemon import Pokemon, Team
-from ia import make_best_action
+from ia import make_best_action, make_best_switch
 import senders
 
 
@@ -17,6 +17,8 @@ class Battle:
     def req_loader(self, req):
         jsonobj = json.loads(req)
         if "wait" in jsonobj.keys():
+            return
+        if "forceSwitch" in jsonobj.keys():
             return
         self.current_pkm = jsonobj['active']
         objteam = jsonobj['side']['pokemon']
@@ -45,3 +47,6 @@ class Battle:
     async def make_move(self, websocket, turn):
         self.turn = turn
         await senders.sendmove(websocket, self.room_id, make_best_action(self), turn)
+
+    async def make_switch(self, websocket):
+        await senders.sendswitch(websocket, self.room_id, make_best_switch(self), self.turn)

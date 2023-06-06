@@ -7,6 +7,10 @@ from login import log_in
 from state import Battle
 import senders
 
+from pokemon import Pokemon
+from ia import effi_pkm
+
+
 battles = []
 
 
@@ -36,7 +40,9 @@ async def battle_tag(websocket, message):
                 battle.req_loader(current[2])
             elif current[1] == "switch" and battle.player_id not in current[2]:
                 # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
-                    battle.update_enemy(current[3].split(',')[0], current[4])
+                battle.update_enemy(current[3].split(',')[0], current[4])
+            elif current[1] == "faint" and battle.player_id in current[2]:
+                await battle.make_switch(websocket)
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_move(websocket, current[2])
@@ -75,5 +81,13 @@ async def main():
             print("<< {}".format(message))
             await stringing(websocket, message)
 
-
 asyncio.get_event_loop().run_until_complete(main())
+
+# def test():
+#     pokemon = Pokemon("dragonite", None, True)
+#     pokemon.load_unknown()
+#     pkm_adv = Pokemon("shiinotic", None, True)
+#     pkm_adv.load_unknown()
+#     print(effi_pkm(pkm_adv, pokemon))
+#
+# test()

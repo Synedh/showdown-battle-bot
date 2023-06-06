@@ -1,21 +1,12 @@
 import json
 from pokemon import Status
 
-def efficiency(elem, elems):
+def efficiency(elem: str, elems: [str]):
     res = 1
-    elem1 = elems[0]
-    elem2 = elems[1] if len(elems) > 1 else None
     with open('data/typechart.json') as data_file:
         typechart = json.load(data_file)
-    tmp = typechart[elem1]['damageTaken'][elem]
-    if tmp == 1:
-        res *= 2
-    elif tmp == 2:
-        res *= 0.5
-    elif tmp == 3:
-        res *= 0
-    if elem2:
-        tmp = typechart[elem2]['damageTaken'][elem]
+    for target_elem in elems:
+        tmp = typechart[target_elem]['damageTaken'][elem]
         if tmp == 1:
             res *= 2
         elif tmp == 2:
@@ -24,8 +15,43 @@ def efficiency(elem, elems):
             res *= 0
     return res
 
+def effi_pkm(pkm1, pkm2):
+    effi1 = 0
+    effi2 = 0
+    for move in pkm1.moves:
+        if move["category"] != "Status":
+            dmg = efficiency(move["type"], pkm2.types) * move["basePower"]
+            if move["type"] in pkm1.types:
+                dmg *= 1.5
+            if effi1 < dmg:
+                effi1 = dmg
+    if effi1 >= 150 and pkm1.stats["spe"] - pkm2.stats["spe"] > 10:
+        return effi1
+    for move in pkm2.moves:
+        if move["category"] != "Status":
+            dmg = efficiency(move["type"], pkm1.types) * move["basePower"]
+            if move["type"] in pkm2.types:
+                dmg *= 1.5
+            if effi2 < dmg:
+                effi2 = dmg
+    if effi2 >= 150 and pkm2.stats["spe"] - pkm1.stats["spe"] > 10:
+        return -effi2
+    return effi1 - effi2
+
 def make_best_switch(battle):
-    pass
+    team = battle.bot_team
+    enemy_pkm = battle.enemy_team.active()
+    best_pkm = None
+    effi = 0
+    for pokemon in team.pokemons:
+        if pokemon == team.active():
+            continue
+        if effi_pkm(pokemon, enemy_pkm) > effi:
+            best_pkm = pokemon.name
+            effi = effi_pkm(pokemon, enemy_pkm)
+    print(best_pkm)
+    return best_pkm
+
 
 def make_best_move(battle):
     pokemon_moves = battle.current_pkm[0]["moves"]
