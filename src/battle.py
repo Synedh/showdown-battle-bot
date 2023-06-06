@@ -24,11 +24,8 @@ class Battle:
         self.battletag = battletag
         self.player_id = ''
         self.fields = []
+        self.side_condition = []
         self.weather = ''
-        self.screens = {
-            'lightscreen': False,
-            'reflect': False
-        }
 
     def get_team(self, team_string: str) -> Team:
         """
@@ -67,7 +64,7 @@ class Battle:
         elif 'active' in jsonobj.keys():
             self.current_pkm = jsonobj['active']
 
-    def update_enemy(self, pkm_name: str, condition: str, pkm_variant: str|None = None, level: str|None = None):
+    def update_enemy(self, pkm_name: str, condition: str, pkm_variant: str = None, level: str = None):
         """
         On first turn, and each time enemy switch, update enemy team and enemy current pokemon.
         :param pkm_name: Pokemon's name
