@@ -5,6 +5,9 @@ import asyncio
 from src.io_process import stringing
 
 async def main():
+    """
+    Loading function. Launch bot.
+    """
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
         while True:
             message = await websocket.recv()

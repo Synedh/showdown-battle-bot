@@ -4,6 +4,12 @@ from src.senders import sender
 
 
 async def log_in(websocket, challid, chall):
+    """
+    Login in function. Send post request to showdown server.
+    :param websocket: Websocket stream
+    :param challid: first part of login challstr sent by server
+    :param chall: second part of login challstr sent by server
+    """
     with open("src/id.txt") as logfile:
         username = logfile.readline()[:-1]
         password = logfile.readline()[:-1]
