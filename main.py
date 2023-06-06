@@ -1,30 +1,18 @@
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
-import time
+#!/usr/bin/env python3
 
-def log_in(browser):
-    id = open('id.txt')
-    username = id.readline()
-    password = id.readline()
-    id.close()
+import asyncio
+import websockets
 
-    time.sleep(1)
+async def stringing(websocket, string_tab):
+    if string_tab[1] == "challstr":
+        await websocket.send("|/autojoin lobby")
+        print("> |/join lobby")
 
-    elem = browser.find_element_by_xpath("//button[@name='login']")
-    elem.click()
+async def hello():
+    async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
+        while True:
+            message = await websocket.recv()
+            print("< {}".format(message))
+            await stringing(websocket, message.split('|'))
 
-    elem = browser.find_element_by_xpath("//input[@name='username']")
-    elem.send_keys(username, Keys.ENTER)
-
-    if password:
-        time.sleep(.2)
-        elem = browser.find_element_by_xpath("//input[@name='password']")
-        elem.send_keys(password, Keys.ENTER)
-
-def main():
-    browser = webdriver.Chrome()
-    browser.get('http://play.pokemonshowdown.com')
-    log_in(browser)
-    time.sleep(10)
-
-main()
+asyncio.get_event_loop().run_until_complete(hello())
