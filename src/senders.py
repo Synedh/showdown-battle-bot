@@ -1,68 +1,73 @@
-async def sender(websocket, room, message1, message2=None):
-    """
-    Default websocket sender. Format message and send websocket.
-    :param websocket: Websocket stream.
-    :param room: Room name.
-    :param message1: First part of message.
-    :param message2: Second part of message. Optional.
-    """
-    if message2:
-        string = room + '|' + message1 + '|' + message2
-    else:
-        string = room + '|' + message1
-    print('>> {}'.format(string))
-    await websocket.send(string)
+from datetime import datetime
 
-async def searching(websocket, form):
-    """
-    Format search websocket, call sender function.
-    :param websocket: Websocket stream.
-    :param form: String, battle format.
-    """
-    await sender(websocket, "", "/search " + form)
 
-async def challenge(websocket, player, form):
-    """
-    Format challenging websocket, call sender function.
-    :param websocket: Websocket stream
-    :param player: Player name.
-    :param form: String, battle format.
-    """
-    await sender(websocket, "", "/challenge " + player + ", " + form)
+class Sender():
 
-async def sendmessage(websocket, battletag, message):
-    """
-    Format text websocket, call sender function.
-    :param websocket: Websocket stream.
-    :param battletag: Battletag string.
-    :param message: Message to sent.
-    """
-    await sender(websocket, battletag, message)
+    def __new__(cls, _=None):
+        if not hasattr(cls, 'instance'):
+            cls.instance = super(Sender, cls).__new__(cls)
+        return cls.instance
 
-async def sendmove(websocket, battletag, move, turn):
-    """
-    Format move choice websocket, call sender function.
-    :param websocket: Websocket stream.
-    :param battletag: Battletag string.
-    :param move: Move id (1, 2, 3, 4).
-    :param turn: Battle turn (1, 2, ...). Different from the one sent by server.
-    """
-    await sender(websocket, battletag, "/choose move " + str(move), str(turn))
+    def __init__(self, websocket=None):
+        if not hasattr(self, 'websocket'):
+            self.websocket = websocket
+        if not self.websocket:
+            raise ValueError('"websocket" needs to be initialised at least one time.')
 
-async def sendswitch(websocket, battletag, pokemon, turn):
-    """
-    Format switch choice websocket, call sender function.
-    :param websocket: Websocket stream.
-    :param battletag: Battletag string.
-    :param pokemon: Pokemon id (1, 2, 3, 4, 5, 6).
-    :param turn: Battle turn (1, 2, ...). Different from the one sent by server.
-    """
-    await sender(websocket, battletag, "/choose switch " + str(pokemon), str(turn))
+    async def send(self, room, *messages):
+        """
+        Default websocket sender. Format message, log and send websocket.
+        :param room: Room name.
+        :param messages: List of messages to send.
+        """
+        string = f'{room}|{"|".join(messages)}'
+        print(f'[{datetime.now().replace(microsecond=0).isoformat()}] >> {string}')
+        await self.websocket.send(string)
 
-async def leaving(websocket, battletag):
-    """
-    Format leaving room websocket, call sender function.
-    :param websocket: Websocket stream.
-    :param battletag: Battletag string.
-    """
-    await sender(websocket, "", "/leave " + battletag)
+    async def searching(self, format):
+        """
+        Battle search, call sender function.
+        :param format: String, battle formatat.
+        """
+        await self.send('', f'/search {format}')
+
+    async def challenge(self, player, format):
+        """
+        Send challenge to player in format, call sender function.
+        :param player: Player name.
+        :param format: String, battle format.
+        """
+        await self.send('', f'/challenge {player}, {format}', format)
+
+    async def sendmove(self, battletag, move, turn):
+        """
+        Battle move choice, call sender function.
+        :param battletag: Battletag string.
+        :param move: Move id (1, 2, 3, 4).
+        :param turn: Battle turn (1, 2, ...). Different from the one sent by server.
+        """
+        await self.send(battletag, f'/choose move {move}', turn)
+
+    async def sendswitch(self, battletag, pokemon, turn):
+        """
+        Battle switch choice, call sender function.
+        :param battletag: Battletag string.
+        :param pokemon: Pokemon id (1, 2, 3, 4, 5, 6).
+        :param turn: Battle turn (1, 2, ...). Different from the one sent by server.
+        """
+        await self.send(battletag, f'/choose switch {pokemon}', turn)
+
+    async def leaving(self, battletag):
+        """
+        Leaving room, call sender function.
+        :param battletag: Battletag string.
+        """
+        await self.send('', f'/leave {battletag}')
+
+    async def forfeit(self, battletag):
+        """
+        Forfeit and leave battle, call sender function.
+        :param battletag: Battletag string.
+        """
+        await self.send(battletag, '/forfeit')
+        await self.leaving(battletag)

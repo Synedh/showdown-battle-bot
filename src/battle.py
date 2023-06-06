@@ -3,7 +3,7 @@ import json
 
 from src.ai import make_best_action, make_best_switch, make_best_move, make_best_order
 from src.pokemon import Pokemon, Team, Status
-from src import senders
+from src.senders import Sender
 
 
 class Battle:
@@ -17,6 +17,7 @@ class Battle:
         init Battle method.
         :param battletag: String, battletag of battle.
         """
+        self.sender = Sender()
         self.bot_team = Team()
         self.enemy_team = Team()
         self.current_pkm = None
@@ -28,7 +29,7 @@ class Battle:
             "reflect": False
         }
 
-    async def req_loader(self, req, websocket):
+    async def req_loader(self, req):
         """
         Parse and translate json send by server. Reload bot team. Called each turn.
         :param req: json sent by server.
@@ -50,7 +51,7 @@ class Battle:
                 print(pkm + "\033[0m")
                 exit(2)
         if "forceSwitch" in jsonobj.keys():
-            await self.make_switch(websocket)
+            await self.make_switch()
         elif "active" in jsonobj.keys():
             self.current_pkm = jsonobj["active"]
 
@@ -118,15 +119,15 @@ class Battle:
         if -6 <= buff <= 6:
             pokemon.buff[stat] = [buff, modifs[str(buff)]]
     
-    async def make_team_order(self, websocket):
+    async def make_team_order(self):
         """
         Call function to correctly choose the first pokemon to send.
         :param websocket: Websocket stream.
         """
         order = "".join([str(x[0]) for x in make_best_order(self, self.battletag.split('-')[1])])
-        await senders.sendmessage(websocket, self.battletag, "/team " + order + "|" + str(self.turn))
+        await self.sender.send(self.battletag, "/team " + order + "|" + str(self.turn))
 
-    async def make_move(self, websocket, best_move=None):
+    async def make_move(self, best_move=None):
         """
         Call function to send move and use the sendmove sender.
         :param websocket: Websocket stream.
@@ -138,11 +139,11 @@ class Battle:
             print("Best move power < 20. Move list : "
                   + ", ".join([move["move"] for move in self.current_pkm[0]['moves']]) + ".")
         if "canMegaEvo" in self.current_pkm[0]:
-            await senders.sendmove(websocket, self.battletag, str(best_move[0]) + " mega", self.turn)
+            await self.sender.sendmove(self.battletag, str(best_move[0]) + " mega", self.turn)
         else:
-            await senders.sendmove(websocket, self.battletag, best_move[0], self.turn)
+            await self.sender.sendmove(self.battletag, best_move[0], self.turn)
 
-    async def make_switch(self, websocket, best_switch=None):
+    async def make_switch(self, best_switch=None):
         """
         Call function to send swich and use the sendswitch sender.
         :param websocket: Websocket stream.
@@ -150,15 +151,15 @@ class Battle:
         """
         if not best_switch:
             best_switch = make_best_switch(self)[0]
-        await senders.sendswitch(websocket, self.battletag, best_switch, self.turn)
+        await self.sender.sendswitch(self.battletag, best_switch, self.turn)
 
-    async def make_action(self, websocket):
+    async def make_action(self):
         """
         Launch best action chooser and call corresponding functions.
         :param websocket: Websocket stream.
         """
         action = make_best_action(self)
         if action[0] == "move":
-            await self.make_move(websocket, action[1:])
+            await self.make_move(action[1:])
         if action[0] == "switch":
-            await self.make_switch(websocket, action[1])
+            await self.make_switch(action[1])

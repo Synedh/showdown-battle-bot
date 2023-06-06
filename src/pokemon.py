@@ -165,10 +165,6 @@ class Team:
 
     def __contains__(self, pkm_name: str):
         return any(pkm.name == pkm_name for pkm in self.pokemons)
-        # for pkm in self.pokemons:
-        #     if pkm.name == pkm_name:
-        #         return True
-        # return False
 
     def __repr__(self):
         return ', '.join([pkm.name for pkm in self.pokemons])

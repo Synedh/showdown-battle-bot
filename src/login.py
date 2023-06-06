@@ -1,25 +1,30 @@
 import sys
 import json
 import requests
+import configparser
 
-from src.senders import sender
+from src.senders import Sender
 
-async def log_in(websocket, challid, chall):
+config = configparser.ConfigParser()
+config.read(f'{sys.path[0]}/config.ini')
+USERNAME = config['bot']['username']
+PASSWORD = config['bot']['password']
+OWNER = config['bot']['owner']
+
+async def log_in(challid, chall):
     """
     Login in function. Send post request to showdown server.
     :param websocket: Websocket stream
     :param challid: first part of login challstr sent by server
     :param chall: second part of login challstr sent by server
     """
-    with open(sys.path[0] + "/src/id.txt") as logfile:
-        username = logfile.readline()[:-1]
-        password = logfile.readline()[:-1]
-    resp = requests.post("https://play.pokemonshowdown.com/action.php?",
+    sender = Sender()
+    resp = requests.post('https://play.pokemonshowdown.com/action.php?',
                          data={
                             'act': 'login',
-                            'name': username,
-                            'pass': password,
-                            'challstr': challid + "%7C" + chall
+                            'name': USERNAME,
+                            'pass': PASSWORD,
+                            'challstr': challid + '%7C' + chall
                          })
-    await sender(websocket, "", "/trn " + username + ",0," + json.loads(resp.text[1:])['assertion'])
-    await sender(websocket, "", "/avatar 159")
+    await sender.send('', f'/trn {USERNAME},0,{json.loads(resp.text[1:])["assertion"]}')
+    await sender.send('', '/avatar lusamine-nihilego')

@@ -1,23 +1,31 @@
 #!/usr/bin/env python3
+import time
+from enum import Enum
+from xmlrpc.client import Boolean
 
 from src import senders
 from src.battlelog_parsing import battlelog_parsing
-from src.login import log_in
+from src.login import log_in, USERNAME, OWNER
 from src.battle import Battle
 
 battles = []
-nb_fights_max = 20
-nb_fights_simu_max = 6
+nb_fights_max = 1
+nb_fights_simu_max = 1
 nb_fights = 0
 
 formats = [
-    "gen7randombattle",
-    "gen7monotyperandombattle",
-    "gen7hackmonscup",
-    "gen7challengecup1v1",
+    "gen8randombattle",
+    "gen8monotyperandombattle",
+    "gen8hackmonscup",
+    "gen8challengecup1v1",
     "gen6battlefactory",
-    "gen7bssfactory"
+    "gen8bssfactory"
 ]
+
+class Usage(Enum):
+    STANDBY = 0
+    CHALL_OWNER = 1
+    SEARCH = 2
 
 
 def check_battle(battle_list, battletag) -> Battle or None:
@@ -32,7 +40,19 @@ def check_battle(battle_list, battletag) -> Battle or None:
             return battle
     return None
 
-async def battle_tag(websocket, message, usage):
+
+def log_battle_result(win: bool):
+    with open("log.txt", "r+") as file:
+        nb_win, nb_loose, total = file.read().split('/')
+        file.seek(0)
+        if win:
+            file.write(f'{int(nb_win) + 1}/{nb_loose}/{int(total) + 1}')
+        else:
+            file.write(f'{nb_win}/{int(nb_loose) + 1}/{int(total) + 1}')
+
+
+
+async def battle_tag(message, usage):
     """
     Main in fuction. Filter every message sent by server and launch corresponding function.
     :param websocket: Websocket stream.
@@ -42,118 +62,117 @@ async def battle_tag(websocket, message, usage):
     global battles
     lines = message.splitlines()
     battle = check_battle(battles, lines[0].split("|")[0].split(">")[1])
+    sender = senders.Sender()
     for line in lines[1:]:
+        current = line.split('|')
+        if len(current) < 2:
+            continue
+        _, command, *other = current
         try:
-            current = line.split('|')
-            if current[1] == "init":
-                # Creation de la bataille
-                battle = Battle(lines[0].split("|")[0].split(">")[1])
-                battles.append(battle)
-                await senders.sendmessage(websocket, battle.battletag, "Hi")
-                await senders.sendmessage(websocket, battle.battletag, "/timer on")
-            elif current[1] == "player" and len(current) > 3 and current[3].lower() == "suchtestbot":
-                # Récupérer l'id joueur du bot
-                battle.player_id = current[2]
-                battle.turn += int(current[2].split('p')[1]) - 1
-            elif current[1] == "request":
-                if current[2] == '':
-                    continue;
-                # Maj team bot
-                if len(current[2]) == 1:
-                    try:
-                        await battle.req_loader(current[3].split('\n')[1], websocket)
-                    except KeyError as e:
-                        print(e)
-                        print(current[3])
-                else:
-                    await battle.req_loader(current[2], websocket)
-            elif current[1] == "teampreview":
-                # Selection d'ordre des pokemons
-                await battle.make_team_order(websocket)
-            elif current[1] == "turn":
-                # Phase de reflexion
-                await battle.make_action(websocket)
-            elif current[1] == "callback" and current[2] == "trapped":
-                await battle.make_move(websocket)
-            elif current[1] == "win":
-                await senders.sendmessage(websocket, battle.battletag, "wp")
-                await senders.leaving(websocket, battle.battletag)
-                battles.remove(battle)
-                if usage == 2:
-                    with open("log.txt", "r+") as file:
-                        line = file.read().split('/')
-                        file.seek(0)
-                        if "suchtestbot" in current[2].lower():
-                            file.write(str(int(line[0]) + 1) + "/" + line[1] + "/" + str(int(line[2]) + 1))
-                        else:
-                            file.write(line[0] + "/" + str(int(line[1]) + 1) + "/" + str(int(line[2]) + 1))
-            elif current[1] == "c":
-                # This is a message
-                pass
-            else:
-                # Send to battlelog parser.
-                battlelog_parsing(battle, current[1:])
-        except IndexError:
-            pass
+            match command:
+                case 'init':
+                    # Creation de la bataille
+                    battle = Battle(lines[0].split("|")[0].split(">")[1])
+                    battles.append(battle)
+                    await sender.send(battle.battletag, "Hi")
+                    await sender.send(battle.battletag, "/timer on")
+                case 'player' if other[1] == USERNAME:
+                    # Récupérer l'id joueur du bot
+                    battle.player_id = other[0]
+                    battle.turn += int(other[0].split('p')[1]) - 1
+                case "request" if other[0] != '':
+                    # Maj team bot
+                    if len(other[0]) == 1:
+                        await battle.req_loader(other[1].split('\n')[1])
+                    else:
+                        await battle.req_loader(other[0])
+                case "teampreview":
+                    # Selection d'ordre des pokemons
+                    await battle.make_team_order()
+                case "turn":
+                    # Phase de reflexion
+                    await battle.make_action()
+                case "callback" if other[0] == "trapped":
+                    await battle.make_move()
+                case "win":
+                    await sender.send(battle.battletag, "wp")
+                    await sender.leaving(battle.battletag)
+                    battles.remove(battle)
+                    if usage == Usage.SEARCH:
+                        log_battle_result(USERNAME in other[0])
+                case _:
+                    # Send to battlelog parser.
+                    battlelog_parsing(battle, command, other)
+        except Exception as e:
+            await sender.send(battle.battletag, 'Sorry, I crashed.')
+            await sender.forfeit(battle.battletag)
+            time.sleep(1)
+            raise e
 
-async def stringing(websocket, message, usage=0):
+
+async def private_message(user, _, content, *other):
+    """
+    Handle private message commands.
+    :param sender: Sender of the private message.
+    :param content: Message sent by user.
+    :param other: Other informations sent with pipes.
+    """
+    sender = senders.Sender()
+
+    if content.startswith('.'):
+        if content == '.help':
+            await sender.send('', f'/pm {user}, Showdown Battle Bot. Active for {", ".join(formats[:-1])} and {formats[-1]}.')
+            await sender.send('', f'/pm {user}, Please challenge me to test your skills.')
+        else:
+            await sender.send('', f'/pm {user}, Unknown command, type ".help" for help.')
+    elif content.startswith('/challenge'):
+        # If somebody challenges the bot
+        if not len(other):
+            # Bot challenge rejected.
+            pass
+        elif other[0] in formats:
+            await sender.send('', f'/accept {user}')
+        else:
+            await sender.send('', '/challenge')
+            await sender.send('', f'/pm {user}, Sorry, I accept only solo randomized metas.')
+
+
+
+async def stringing(message, usage=Usage.STANDBY):
     """
     First filtering function on received messages.
     Handle challenge and research actions.
-    :param websocket: Websocket stream.
     :param message: Message received from server. Format : room|message1|message2.
     :param usage: 0: Only recieving. 1 Challenging Synedh. 2 searching random battles.
     """
-    global nb_fights_max
-    global nb_fights
-    global nb_fights_simu_max
-    global battles
-    global formats
+    sender = senders.Sender()
+    room, command, *content = message.split('|')
 
-    string_tab = message.split('|')
-    if string_tab[1] == "challstr":
-        # If we got the challstr, we now can log in.
-        await log_in(websocket, string_tab[2], string_tab[3])
-    elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
-        # Once we are connected.
-        if usage == 1:
-            await senders.challenge(websocket, "Synedh", formats[0])
-        if usage == 2:
-            await senders.searching(websocket, formats[0])
+    match command:
+        case 'challstr':
+            # If we got the challstr, we now can log in.
+            await log_in(content[0], content[1])
+        case 'updateuser' if USERNAME in content[0] and usage == Usage.CHALL_OWNER:
+            # Logged in and chall owner.
+            await sender.challenge(OWNER, formats[0])
+        case 'updateuser' if USERNAME in content[0] and usage == Usage.SEARCH:
+            # Logged in and search battle.
+            await sender.searching(formats[0])
             nb_fights += 1
-    elif string_tab[1] == "deinit" and usage == 2:
-        # If previous fight is over and we're in 2nd usage
-        if nb_fights < nb_fights_max:  # If it remains fights
-            await senders.searching(websocket, formats[0])
+        case 'deinit' if Usage.SEARCH and nb_fights < nb_fights_max:
+            # If previous fight is over, we're in search usage and it remains fights
+            await sender.searching(formats[0])
             nb_fights += 1
-        elif nb_fights >= nb_fights_max and len(battles) == 0:  # If it don't remains fights
+        case 'deinit' if Usage.SEARCH and nb_fights >= nb_fights_max and len(battles) == 0:
+            # If previous fight is over, we're in search usage and it don't remains fights
             exit(0)
-    elif "|inactive|Battle timer is ON:" in message and usage == 2:
-        # If previous fight has started and we can do more simultaneous fights and we're in 2nd usage.
-        if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
-            await senders.searching(websocket, formats[0])
-            nb_fights += 1
-    elif "updatechallenges" in string_tab[1]:
-        # If somebody challenges the bot
-        try:
-            if string_tab[2].split('\"')[3] != "challengeTo":
-                if string_tab[2].split('\"')[5] in formats:
-                    await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3])
-                else:
-                    await senders.sender(websocket, "", "/reject " + string_tab[2].split('\"')[3])
-                    await senders.sender(websocket, "", "/pm " + string_tab[2].split('\"')[3]
-                                         + ", Sorry, I accept only solo randomized metas.")
-        except KeyError:
-            pass
-    elif string_tab[1] == "pm" and "SuchTestBot" not in string_tab[2]:
-        if string_tab[4] == ".info":
-            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Showdown Battle Bot. Active for "
-                                                                       + ", ".join(formats[:-1]) + " and "
-                                                                       + formats[-1] + ".")
-            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Please challenge me to test your skills.")
-        else:
-            await senders.sender(websocket, "", "/pm " + string_tab[2] + ", Unknown command, type \".info\" for help.")
-
-    if "battle" in string_tab[0]:
+        case 'pm' if USERNAME not in content[0]:
+            await private_message(*content)
+        case _ if '|inactive|Battle timer is ON:' in message and usage == Usage.SEARCH:
+            # If previous fight has started and we can do more simultaneous fights and we're in search usage.
+            if len(battles) < nb_fights_simu_max and nb_fights < nb_fights_max:
+                await sender.searching(formats[0])
+                nb_fights += 1
+    if "battle" in room:
         # Battle concern message.
-        await battle_tag(websocket, message, usage)
+        await battle_tag(message, usage)
