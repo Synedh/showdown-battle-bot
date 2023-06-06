@@ -1,6 +1,7 @@
 import json
 from pokemon import Status
 
+
 def efficiency(elem: str, elems: [str]):
     res = 1
     with open('data/typechart.json') as data_file:
@@ -15,28 +16,31 @@ def efficiency(elem: str, elems: [str]):
             res *= 0
     return res
 
+
+def effi_move(move, pkm):
+    dmg = efficiency(move["type"], pkm.types) * move["basePower"]
+    if move["type"] in pkm.types:
+        dmg *= 1.5
+    return dmg
+
+
 def effi_pkm(pkm1, pkm2):
     effi1 = 0
     effi2 = 0
     for move in pkm1.moves:
-        if move["category"] != "Status":
-            dmg = efficiency(move["type"], pkm2.types) * move["basePower"]
-            if move["type"] in pkm1.types:
-                dmg *= 1.5
-            if effi1 < dmg:
-                effi1 = dmg
+        dmg = effi_move(move, pkm2)
+        if effi1 < dmg:
+            effi1 = dmg
     if effi1 >= 150 and pkm1.stats["spe"] - pkm2.stats["spe"] > 10:
         return effi1
     for move in pkm2.moves:
-        if move["category"] != "Status":
-            dmg = efficiency(move["type"], pkm1.types) * move["basePower"]
-            if move["type"] in pkm2.types:
-                dmg *= 1.5
-            if effi2 < dmg:
-                effi2 = dmg
+        dmg = effi_move(move, pkm1)
+        if effi2 < dmg:
+            effi2 = dmg
     if effi2 >= 150 and pkm2.stats["spe"] - pkm1.stats["spe"] > 10:
         return -effi2
     return effi1 - effi2
+
 
 def make_best_switch(battle):
     team = battle.bot_team
@@ -44,13 +48,14 @@ def make_best_switch(battle):
     best_pkm = None
     effi = -1024
     for pokemon in team.pokemons:
-        if pokemon == team.active():
+        if pokemon == team.active() or pokemon.condition == "0 fnt":
             continue
         if effi_pkm(pokemon, enemy_pkm) > effi:
             best_pkm = pokemon
             effi = effi_pkm(pokemon, enemy_pkm)
     print(best_pkm.name)
-    return team.pokemons.index(best_pkm)
+    print(team.pokemons.index(best_pkm))
+    return team.pokemons.index(best_pkm) + 1, effi
 
 
 def make_best_move(battle):
@@ -58,27 +63,26 @@ def make_best_move(battle):
     pokemon = battle.bot_team.active()
     enemy_pkm = battle.enemy_team.active()
     best_move = (None, -1)
-    nonVolatileStatusMoves = [
-        "toxic", # tox
-        "poisonpowder", # psn
-        "thunderwave", "stunspore", "glare", # par
-        "willowisp", # brn
-        "spore", "darkvoid", "sleeppowder" # slp
+    non_volatile_status_moves = [
+        "toxic",  # tox
+        "poisonpowder",  # psn
+        "thunderwave", "stunspore", "glare",  # par
+        "willowisp",  # brn
+        "spore", "darkvoid", "sleeppowder"  # slp
     ]
 
     for i, move in enumerate(pokemon.moves):
-        if pokemon_moves[i]["disabled"] == "true":
+        if pokemon_moves[i]["disabled"]:
             continue
-        effi = efficiency(move["type"], enemy_pkm.types)
-        if move["type"] in pokemon.types:
-            effi *= 1.5
-        if move["id"] in nonVolatileStatusMoves and enemy_pkm.status == Status.UNK:
+        effi = effi_move(move, enemy_pkm)
+        if move["id"] in non_volatile_status_moves and enemy_pkm.status == Status.UNK:
             effi = 100
-        if effi * move["basePower"] > best_move[1]:
-            best_move = (i, effi * move["basePower"])
-    print(pokemon_moves[best_move[0]]["id"])
-    return best_move[0] + 1
+        if effi > best_move[1]:
+            best_move = (i + 1, effi)
+    print(pokemon_moves[best_move[0] - 1]["id"])
+    return best_move
+
 
 def make_best_action(battle):
-    id_move = make_best_move(battle)
+    id_move = make_best_move(battle)[0]
     return id_move

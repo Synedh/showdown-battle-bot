@@ -53,6 +53,7 @@ class Pokemon:
         self.moves = infos["possibleMoves"]
 
     def load_known(self, abilities, stats, moves):
+        stats == stats
         infos = infos_for_pokemon(self.name)
         self.types = infos["types"]
         self.abilities = abilities
