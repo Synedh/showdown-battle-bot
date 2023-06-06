@@ -1,0 +1,12 @@
+import websockets
+import asyncio
+from src.webreq_gest import stringing
+
+async def main():
+    async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
+        while True:
+            message = await websocket.recv()
+            print("<< {}".format(message))
+            await stringing(websocket, message)
+
+asyncio.get_event_loop().run_until_complete(main())

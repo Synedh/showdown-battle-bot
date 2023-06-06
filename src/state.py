@@ -1,8 +1,9 @@
 import json
 
-from pokemon import Pokemon, Team
 from ia import make_best_action, make_best_switch
-import senders
+from pokemon import Pokemon, Team
+
+from src import senders
 
 
 class Battle:

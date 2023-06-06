@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 
 import asyncio
-import websockets
 
+import websockets
 from login import log_in
 from state import Battle
-import senders
+
+from src import senders
 
 battles = []
 
@@ -70,13 +71,3 @@ async def stringing(websocket, message):
     elif "battle" in string_tab[0]:
         # Si on recoit un message dans une interface de combat
         await battle_tag(websocket, message)
-
-
-async def main():
-    async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
-        while True:
-            message = await websocket.recv()
-            print("<< {}".format(message))
-            await stringing(websocket, message)
-
-asyncio.get_event_loop().run_until_complete(main())

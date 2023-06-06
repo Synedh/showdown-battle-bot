@@ -1,5 +1,6 @@
 import json
-from pokemon import Status
+
+from src.pokemon import Status
 
 
 def efficiency(elem: str, elems: [str]):
