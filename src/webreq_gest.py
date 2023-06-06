@@ -25,6 +25,7 @@ async def battle_tag(websocket, message):
                 # Creation de la bataille
                 battles.append(Battle(lines[0].split('-')[len(lines[0].split('-')) - 1]))
                 await senders.sendmessage(websocket, battles[len(battles) - 1].room_id, "Hi")
+                await senders.sendmessage(websocket, battles[len(battles) - 1].room_id, "/timer on")
             elif current[1] == "player" and len(current) > 3 and current[3].lower() == "suchtestbot":
                 # Récupérer l'id joueur du bot
                 battle.set_player_id(current[2])
@@ -56,6 +57,7 @@ async def stringing(websocket, message):
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
         await senders.challenge(websocket, "Synedh")
+        # await senders.searching(websocket)
     elif "updatechallenges" in string_tab[1]:
         # Si synedh envoie un challenge, alors accepter
         try:
