@@ -60,7 +60,7 @@ async def battle_tag(websocket, message):
                     await battle.req_loader(current[2], websocket)
             elif current[1] == "switch" and battle.player_id not in current[2]:
                 # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
-                battle.update_enemy(current[3].split(',')[0], current[4])
+                battle.update_enemy(current[3].split(',')[0], current[4], current[3].split(',')[1].split('L')[1])
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)

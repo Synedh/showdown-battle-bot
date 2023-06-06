@@ -34,7 +34,8 @@ class Battle:
         objteam = jsonobj['side']['pokemon']
         self.bot_team = Team()
         for pkm in objteam:
-            newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'])
+            newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'],
+                             pkm['details'].split(',')[1].split('L')[1])
             newpkm.load_known([pkm['baseAbility']], pkm["item"], pkm['stats'], pkm['moves'])
             self.bot_team.add(newpkm)
         if "forceSwitch" in jsonobj.keys():
@@ -49,7 +50,7 @@ class Battle:
         """
         self.player_id = player_id
 
-    def update_enemy(self, pkm_name, condition):
+    def update_enemy(self, pkm_name, level, condition):
         """
         On first turn, and each time enemy switch, update enemy team and enemy current pokemon.
         :param pkm_name: Pokemon's name
@@ -61,7 +62,7 @@ class Battle:
         if pkm_name not in self.enemy_team:
             for pkm in self.enemy_team.pokemons:
                 pkm.active = False
-            pkm = Pokemon(pkm_name, condition, True)
+            pkm = Pokemon(pkm_name, condition, True, level)
             pkm.load_unknown()
             self.enemy_team.add(pkm)
         else:
