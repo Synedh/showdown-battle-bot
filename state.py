@@ -1,6 +1,7 @@
 import json
 
 from pokemon import Pokemon, Team
+from ia import make_best_action
 import senders
 
 
@@ -12,34 +13,35 @@ class Battle:
         self.turn = 0
         self.room_id = room_id
         self.player_id = ""
-        print("** New Battle, id : " + room_id)
 
     def req_loader(self, req):
         jsonobj = json.loads(req)
+        if "wait" in jsonobj.keys():
+            return
         self.current_pkm = jsonobj['active']
         objteam = jsonobj['side']['pokemon']
-
+        self.bot_team = Team()
         for pkm in objteam:
             newpkm = Pokemon(pkm['details'].split(',')[0], pkm['condition'], pkm['active'])
             newpkm.load_known([pkm['baseAbility']], pkm['stats'], pkm['moves'])
             self.bot_team.add(newpkm)
-        print("** Update bot_team")
 
     def set_player_id(self, player_id):
         self.player_id = player_id
-        print("** Set bot id : " + player_id)
 
     def update_enemy(self, pkm_name, condition):
         if pkm_name not in self.enemy_team:
+            print("** Update enemy - Not yet in team")
             for pkm in self.enemy_team.pokemons:
-                pkm.set_activity(False)
+                pkm.active = False
             pkm = Pokemon(pkm_name, condition, True)
             pkm.load_unknown()
             self.enemy_team.add(pkm)
         else:
-            pass
-        print("** Update enemy : " + pkm_name)
+            print("** Update enemy - Yet in team")
+            # for pkm in self.enemy_team.pokemons:
+            #     pkm.active = False
 
     async def make_move(self, websocket, turn):
-        await senders.sendmessage(websocket, self.room_id, "Coucou.")
-        print("** Start searching, turn : " + turn)
+        self.turn = turn
+        await senders.sendmove(websocket, self.room_id, make_best_action(self), turn)
