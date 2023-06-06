@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 
-from login import log_in
-from battle import Battle
-
-import senders
+from src.login import log_in
+from src.battle import Battle
+from src import senders
 
 battles = []
 
@@ -40,6 +39,8 @@ async def battle_tag(websocket, message):
                 await battle.make_action(websocket)
             elif current[1] == "-status":
                 battle.update_status_enemy(current[3])
+            elif current[1] == "callback" and current[2] == "trapped":
+                await battle.make_move(websocket)
             elif current[1] == "win":
                 await senders.sendmessage(websocket, battles[len(battles) - 1].room_id, "wp")
                 await senders.leaving(websocket, battle.room_id)
@@ -56,13 +57,17 @@ async def stringing(websocket, message):
         await log_in(websocket, string_tab[2], string_tab[3])
     elif string_tab[1] == "updateuser" and string_tab[2] == "SuchTestBot":
         # Si on est log, alors on peut commencer les combats
-        await senders.challenge(websocket, "Synedh")
-        # await senders.searching(websocket)
+        # await senders.challenge(websocket, "Synedh")
+        await senders.searching(websocket)
     elif "updatechallenges" in string_tab[1]:
-        # Si synedh envoie un challenge, alors accepter
+        # Si quelqu'un envoie un challenge, alors accepter
         try:
             if string_tab[2].split('\"')[3] != "challengeTo":
-                await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3], "")
+                if string_tab[2].split('\"')[5] == "gen7randombattle":
+                    await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3])
+                else:
+                    await senders.sender(websocket, "", "/reject " + string_tab[2].split('\"')[3])
+                    await senders.sender(websocket, "", "/pm " + string_tab[2].split('\"')[3] + ", Sorry, I accept only [Gen 7] Random Battle challenges.")
         except KeyError:
             pass
     elif "battle" in string_tab[0]:
