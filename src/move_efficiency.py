@@ -45,11 +45,8 @@ def side_modificator(battle, move):
     :param move: Json object, move.
     :return: Integer [0; +oo]
     """
-    if move["category"] == "Special" and battle.screens["lightscreen"]:
-        print("** Lightscreen")
-        return 0.5
-    if move["category"] == "Physical" and battle.screens["reflect"]:
-        print("** Reflect")
+    if (move["category"] == "Special" and battle.screens["lightscreen"]
+        or move["category"] == "Physical" and battle.screens["reflect"]):
         return 0.5
     return 1
 
@@ -180,8 +177,7 @@ def effi_boost(move, pkm1, pkm2):
                 and (pkm1_spe * pkm1.buff_affect("spe") + value * pkm1_spe - pkm2_spe * pkm2.buff_affect("spe") > 0)):
             return True
     except KeyError as e:
-        print("\033[31m" + str(e))
-        print(str(tmp) + "\033[0m")
+        print("\033[31m" + str(e) + "\n" + str(tmp) + "\033[0m")
         exit()
     return False
 

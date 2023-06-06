@@ -1,7 +1,8 @@
+import sys
 import json
 import requests
+
 from src.senders import sender
-import sys
 
 async def log_in(websocket, challid, chall):
     """

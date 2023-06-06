@@ -36,12 +36,11 @@ def make_best_order(battle, form=None):
     """
     Parse battle.bot_team to find the best pokemon based on his damages against enemy team.
     :param battle: Battle object, current battle.
-    :form: Battle format.
+    :param form: Battle format.
     :return: List of pokemons in bot_team sorted by efficiency ([[1, 6], [-oo, +oo]]).
     """
     team = battle.bot_team
     enemy_team = battle.enemy_team
-    # print(team)
     ordered_team = []
     for i, pokemon in enumerate(team.pokemons):
         average_efficiency = 0
@@ -87,7 +86,7 @@ def make_best_move(battle):
     """
     Parse attacks of current pokemon and send the most efficient based on previous function
     :param battle: Battle object, current battle.
-    :return: (Index of move in pokemon (Integer, [-1, 4), efficiency (Integer, [0, +oo[))
+    :return: (Index of move in pokemon (Integer, [-1, 4]), efficiency (Integer, [0, +oo[))
     """
     pokemon_moves = battle.current_pkm[0]["moves"]
     pokemon = battle.bot_team.active()
@@ -142,4 +141,4 @@ def make_best_action(battle):
                   - enm_pkm.stats["spe"] * bot_pkm.buff_affect("spe")) < 10
              or best_bot_atk < comparator_calculation(100, bot_pkm, enm_pkm)) and switch[0]):
         return "switch", switch[0]
-    return "move", make_best_move(battle)[0]
+    return ["move"] + [i for i in make_best_move(battle)]

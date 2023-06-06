@@ -95,7 +95,6 @@ class Pokemon:
         :param stats: Dict. {hp, atk, def, spa, spd, spe}
         :param moves: Array. Not used.
         """
-        stats == stats
         infos = infos_for_pokemon(self.name)
         self.types = infos["types"]
         self.abilities = abilities
@@ -172,7 +171,4 @@ class Team:
         # return False
 
     def __repr__(self):
-        res = ""
-        for pkm in self.pokemons:
-            res += str(pkm.name) + ("\n" if pkm != self.pokemons[-1] else "")
-        return res
+        return ', '.join([pkm.name for pkm in self.pokemons])
