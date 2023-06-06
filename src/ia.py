@@ -1,6 +1,6 @@
 import json
 
-from src.pokemon import Status
+from pokemon import Status
 
 
 def efficiency(elem: str, elems: [str]):
@@ -54,8 +54,7 @@ def make_best_switch(battle):
         if effi_pkm(pokemon, enemy_pkm) > effi:
             best_pkm = pokemon
             effi = effi_pkm(pokemon, enemy_pkm)
-    print(best_pkm.name)
-    print(team.pokemons.index(best_pkm))
+    print("** " + best_pkm.name)
     return team.pokemons.index(best_pkm) + 1, effi
 
 
@@ -80,7 +79,7 @@ def make_best_move(battle):
             effi = 100
         if effi > best_move[1]:
             best_move = (i + 1, effi)
-    print(pokemon_moves[best_move[0] - 1]["id"])
+    print("** " + pokemon_moves[best_move[0] - 1]["name"])
     return best_move
 
 
