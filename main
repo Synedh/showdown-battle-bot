@@ -10,14 +10,8 @@ async def main():
     async with websockets.connect('ws://sim.smogon.com:8000/showdown/websocket') as websocket:
         while True:
             message = await websocket.recv()
-            global SILENCE
-            if not SILENCE:
-                print("<< {}".format(message))
+            print("<< {}".format(message))
             await stringing(websocket, message)
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        if sys.argv[1] == "-s":
-            global SILENCE
-            SILENCE = True
     asyncio.get_event_loop().run_until_complete(main())

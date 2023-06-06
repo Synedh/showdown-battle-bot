@@ -86,11 +86,10 @@ def make_best_switch(battle):
         if effi_pkm(pokemon, enemy_pkm, battle.enemy_team) > effi:
             best_pkm = pokemon
             effi = effi_pkm(pokemon, enemy_pkm, battle.enemy_team)
-    # try:
-    #     print("** " + best_pkm.name + " - " + str(effi))
-    # except AttributeError:
-    #     return None, effi
-    return team.pokemons.index(best_pkm) + 1, effi
+    try:
+        return team.pokemons.index(best_pkm) + 1, effi
+    except ValueError:
+        return None, effi
 
 
 def make_best_move(battle):
@@ -100,12 +99,11 @@ def make_best_move(battle):
     best_move = (None, -1)
 
     for i, move in enumerate(pokemon.moves):
-        if pokemon_moves[i]["disabled"]:
+        if "disabled" in pokemon_moves[i].keys() and pokemon_moves[i]["disabled"]:
             continue
         effi = effi_move(move, pokemon, enemy_pkm, battle.enemy_team)
         if effi > best_move[1]:
             best_move = (i + 1, effi)
-    # print("** " + pokemon.name + " - " + enemy_pkm.name + " - " + pokemon_moves[best_move[0] - 1]["move"] + " - " + str(best_move[1]))
     return best_move
 
 
@@ -124,6 +122,8 @@ def make_best_action(battle):
             best_enm_atk = effi
 
     switch = make_best_switch(battle)
-    if switch[1] > effi_pkm(bot_pkm, enm_pkm, battle.enemy_team):
+    if (switch[1] > effi_pkm(bot_pkm, enm_pkm, battle.enemy_team)
+        and best_enm_atk > 150 and bot_pkm.stats["spe"] - enm_pkm.stats["spe"] < 10
+        and switch[0]):
         return "switch", switch[0]
     return "move", make_best_move(battle)[0]
