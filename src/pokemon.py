@@ -150,9 +150,7 @@ class Team:
         if len(self.pokemons) < 6:
             self.pokemons.append(pokemon)
         else:
-            print("\033[31m" + "Error : Failed to add " + pokemon.name + " : there is yet six pokemon in the team :\n"
-                  + str(self) + "\033[0m")
-            exit(2)
+            raise IndexError("Failed to add " + pokemon.name + " : there is yet six pokemon in team :\n" + str(self))
 
     def remove(self, pkm_name):
         """
@@ -164,8 +162,7 @@ class Team:
                 if "mega" not in pkm.name.lower():
                     del self.pokemons[i]
                 return
-        print("\033[31m" + "Error : Unable to remove " + pkm_name + " from team :\n" + str(self) + "\033[0m")
-        exit(2)
+        raise NameError("Unable to remove " + pkm_name + " from team :\n" + str(self))
 
     def __contains__(self, pkm_name: str):
         return any(pkm.name == pkm_name for pkm in self.pokemons)
@@ -177,5 +174,5 @@ class Team:
     def __repr__(self):
         res = ""
         for pkm in self.pokemons:
-            res += str(pkm.name) + "\n"
+            res += str(pkm.name) + ("\n" if pkm != self.pokemons[-1] else "")
         return res

@@ -27,21 +27,37 @@ def efficiency(elem: str, elems: [str]):
     res = 1
     with open('data/typechart.json') as data_file:
         typechart = json.load(data_file)
-    for target_elem in elems:
-        tmp = typechart[target_elem]['damageTaken'][elem]
-        if tmp == 1:
-            res *= 2
-        elif tmp == 2:
-            res *= 0.5
-        elif tmp == 3:
-            res *= 0
+        for target_elem in elems:
+            tmp = typechart[target_elem]['damageTaken'][elem]
+            if tmp == 1:
+                res *= 2
+            elif tmp == 2:
+                res *= 0.5
+            elif tmp == 3:
+                res *= 0
     return res
+
+
+def side_modificator(battle, move):
+    """
+    Side modificators, like screens, entry hazards, etc.
+    :param battle: Battle instance
+    :param move: Json object, move.
+    :return: Integer [0; +oo]
+    """
+    if move["category"] == "Special" and battle.screens["lightscreen"]:
+        print("** Lightscreen")
+        return 0.5
+    if move["category"] == "Physical" and battle.screens["reflect"]:
+        print("** Reflect")
+        return 0.5
+    return 1
 
 
 def item_modificator(move, pkm1, pkm2):
     """
     Calculation of item modificator
-    :param move: Json object, status move.
+    :param move: Json object, move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
     :return: Integer [0; +oo[
@@ -114,9 +130,10 @@ def comparator_calculation(power, pkm1, pkm2):
     return floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
 
 
-def damage_calculation(move, pkm1, pkm2):
+def damage_calculation(battle, move, pkm1, pkm2):
     """
     Damage move calculation.
+    :param battle: Battle, used for side modificator.
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move.
     :param pkm2: Pokemon that will receive move.
@@ -131,8 +148,9 @@ def damage_calculation(move, pkm1, pkm2):
     burn = 0.5 if pkm1.status == Status.BRN and "Guts" not in pkm1.abilities else 1
     item_mod = item_modificator(move, pkm1, pkm2)
     ability_mod = ability_modificator(move, pkm1, pkm2)
+    side_mod = side_modificator(battle, move)
     return floor(floor(((0.4 * pkm1.level + 2) * (atk / defe) * power) / 50 + 2)
-                 * stab * effi * burn * item_mod * ability_mod)
+                 * stab * effi * burn * item_mod * ability_mod * side_mod)
 
 
 def effi_boost(move, pkm1, pkm2):
@@ -205,9 +223,10 @@ def effi_status(move, pkm1, pkm2, team):
         return 200
 
 
-def effi_move(move, pkm1, pkm2, team):
+def effi_move(battle, move, pkm1, pkm2, team):
     """
     Calculate efficiency of move based on previous functions, type, base damage and item.
+    :param battle: Battle instance
     :param move: Json object, status move.
     :param pkm1: Pokemon that will use move
     :param pkm2: Pokemon that will receive move
@@ -224,4 +243,4 @@ def effi_move(move, pkm1, pkm2, team):
 
     if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
         return effi_status(move, pkm1, pkm2, team)
-    return damage_calculation(move, pkm1, pkm2)
+    return damage_calculation(battle, move, pkm1, pkm2)

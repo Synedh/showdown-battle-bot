@@ -22,6 +22,10 @@ def major_actions(battle: Battle, split_line):
         pass
     elif split_line[0] == "faint":
         pass
+    elif split_line[0] == "poke":
+        if battle.player_id not in split_line[1]:
+            pkm = split_line[2].split(', ')
+            battle.update_enemy(pkm[0], pkm[1][1:] if len(pkm) > 1 and 'L' in pkm[1] else '100', 100)
     else:
         pass
 
@@ -62,9 +66,13 @@ def minor_actions(battle: Battle, split_line):
     elif split_line[0] == "-fieldend":
         pass
     elif split_line[0] == "-sidestart":
-        pass
+        if "Reflect" in split_line[2] or "Light Screen" in split_line[2]:
+            battle.screens[split_line[2].split(":")[1].lower().replace(" ", "")] = True
+            print("** " + battle.screens)
     elif split_line[0] == "-sideend":
-        pass
+        if "Reflect" in split_line[2] or "Light Screen" in split_line[2]:
+            battle.screens[split_line[2].split(":")[1].lower().replace(" ", "")] = False
+            print("** " + battle.screens)
     elif split_line[0] == "-crit":
         pass
     elif split_line[0] == "-supereffective":
