@@ -31,7 +31,7 @@ class Battle:
         """
         jsonobj = json.loads(req)
         print(jsonobj)
-        self.turn += 1
+        self.turn += 2
         objteam = jsonobj['side']['pokemon']
         self.bot_team = Team()
         for pkm in objteam:
