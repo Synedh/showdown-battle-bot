@@ -37,27 +37,22 @@ def infos_for_pokemon(pkm_name: str) -> dict:
     :return: Dict. {types, possibleAbilities, baseStats, possibleMoves}
     """
     pkm_name = re.sub(r'\W', '', pkm_name.lower())
-    res = {
-        "types": [],
-        "possibleAbilities": [],
-        "baseStats": {},
-        "possibleMoves": []
-    }
     with open('data/pokedex.json', encoding='utf8') as data_file:
         pokemon = json.load(data_file)[pkm_name]
-    res["types"] = pokemon["types"]
-    res["possibleAbilities"] = list(pokemon["abilities"].values())
-    res["baseStats"] = pokemon["baseStats"]
-    with open('data/formats-data.json', encoding='utf8') as data_file:
-        try:
-            pokemon_moves = json.load(data_file)[pkm_name]["randomBattleMoves"]
-        except KeyError:
-            pokemon_moves = []
     with open("data/moves.json", encoding='utf-8') as data_file:
         moves = json.load(data_file)
-    for move in pokemon_moves:
-        res["possibleMoves"].append(moves[move])
-    return res
+    with open('data/formats-data.json', encoding='utf8') as data_file:
+        formats_data = json.load(data_file)
+    pokemon_moves = list(set(
+        formats_data.get(pkm_name, {}).get("randomBattleMoves", [])
+        + formats_data.get(f'{pkm_name}max', {}).get("randomBattleMoves", [])
+    ))
+    return {
+        "types": pokemon["types"],
+        "possibleAbilities": list(pokemon["abilities"].values()),
+        "baseStats": pokemon["baseStats"],
+        "possibleMoves": [moves[move] for move in pokemon_moves]
+    }
 
 
 def stat_calculation(base, level, ev, hp=False):
@@ -165,14 +160,15 @@ class Pokemon:
         """
         return self.buff[stat][1]
 
-    def compute_stat(self, stat: Stats, ev: int = 252) -> int:
+    def compute_stat(self, stat: Stats, ev: int = 84) -> int:
         """
         Return calculated stats after modificators
         :param stat: Stats
         :return: Integer
         """
-        return stat_calculation(self.stats[stat], self.level, ev) * self.buff_affect(stat)
-
+        r = stat_calculation(self.stats[stat], self.level, ev)
+        print(self.name, self.level, r,  self.buff_affect(stat))
+        return r * self.buff_affect(stat)
     def __repr__(self) -> int:
         return str(vars(self))
 

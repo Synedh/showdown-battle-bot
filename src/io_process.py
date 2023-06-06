@@ -36,14 +36,16 @@ def check_battle(battle_list: list[Battle], battletag: str) -> Battle|None:
     :param battletag: String, Tag of Battle.
     :return: Battle.
     """
-    for battle in battle_list:
-        if battle.battletag == battletag:
-            return battle
-    return None
+    return next((battle for battle in battle_list if battle.battletag == battletag), None)
 
 
 def log_battle_result(win: bool):
-    with open("log.txt", "r+", encoding='utf8') as file:
+    """
+    Log searched battles in log.txt file.
+    Format win/lose/played
+    :param win: bool
+    """
+    with open('log.txt', 'r+', encoding='utf8') as file:
         nb_win, nb_loose, total = file.read().split('/')
         file.seek(0)
         if win:
@@ -61,7 +63,7 @@ async def battle_tag(message: str, usage: Usage):
     :param usage: Bot usage : standby, challenging owner, searching random battles.
     """
     lines = message.splitlines()
-    battle = check_battle(BATTLES, lines[0].split("|")[0].split(">")[1])
+    battle = check_battle(BATTLES, lines[0].split('|')[0].split('>')[1])
     sender = Sender()
     for line in lines[1:]:
         current = line.split('|')
@@ -74,35 +76,37 @@ async def battle_tag(message: str, usage: Usage):
                     # Creation de la bataille
                     battle = Battle(lines[0].split("|")[0].split(">")[1])
                     BATTLES.append(battle)
-                    await sender.send(battle.battletag, "Hi")
-                    await sender.send(battle.battletag, "/timer on")
+                    await sender.send(battle.battletag, 'Hi')
+                    await sender.send(battle.battletag, '/timer on')
                 case 'player' if other[1] == USERNAME:
                     # Récupérer l'id joueur du bot
                     battle.player_id = other[0]
                     battle.turn += int(other[0].split('p')[1]) - 1
-                case "request" if other[0] != '':
+                case 'request' if other[0] != '':
                     # Maj team bot
                     if len(other[0]) == 1:
                         await battle.req_loader(other[1].split('\n')[1])
                     else:
                         await battle.req_loader(other[0])
-                case "teampreview":
+                case 'teampreview':
                     # Selection d'ordre des pokemons
                     await battle.make_team_order()
-                case "turn":
+                case 'turn':
                     # Phase de reflexion
                     await battle.make_action()
-                case "callback" if other[0] == "trapped":
+                case 'callback' if other[0] == 'trapped':
                     await battle.make_move(make_best_move(battle))
-                case "poke" if battle.player_id not in other[0]:
+                case 'poke' if battle.player_id not in other[0]:
                     name, variant, level = re.match(r'(.*?)\|(.*?), (?:L(\d+), )?.*', '|'.join(other[0:2])).groups()
                     battle.update_enemy(name, '100/100', variant, level if level else 100)
-                case "win":
-                    await sender.send(battle.battletag, "wp")
+                case 'win':
+                    await sender.send(battle.battletag, 'wp')
                     await sender.leaving(battle.battletag)
                     BATTLES.remove(battle)
                     if usage == Usage.SEARCH:
                         log_battle_result(USERNAME in other[0])
+                case 'error':
+                    raise ValueError(*other)
                 case _:
                     # Send to battlelog parser.
                     battlelog_parsing(battle, command, other)

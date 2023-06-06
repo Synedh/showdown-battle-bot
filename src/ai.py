@@ -85,27 +85,21 @@ def make_best_move(battle) -> tuple[int,int]:
     pokemon_moves = battle.current_pkm[0]['moves']
     pokemon = battle.bot_team.active()
     enemy_pkm = battle.enemy_team.active()
-    best_move = -1, -1
+    best_move = 1, 0
 
-    if len(pokemon_moves) == 1:  # Case Outrage, Mania, Phantom Force, etc.
-        for move in pokemon.moves:
-            if move['name'] == pokemon_moves[0]['move']:
-                return 1, effi_move(battle, move, pokemon, enemy_pkm, battle.enemy_team)
-        return 1, 0
-
-    for i, move in enumerate(pokemon.moves):  # Classical parse
-        if next((m for m in pokemon_moves if m['move'] == move['name']), {}).get('disabled'):
-            print(move['name'], 'disabled')
+    for i, move in enumerate(pokemon_moves):
+        if move.get('disabled'):
             continue
-        effi = effi_move(battle, move, pokemon, enemy_pkm, battle.enemy_team)
+        full_move = next(m for m in pokemon.moves if m['name'] == move['move'])
+        effi = effi_move(battle, full_move, pokemon, enemy_pkm, battle.enemy_team)
         if effi > best_move[1]:
             best_move = (i + 1, effi)
-        print(move['name'], effi)
+        print(move['move'], effi)
 
     for i, move in enumerate(pokemon_moves):  # Boosts handling
         if effi_boost(move, pokemon, enemy_pkm):
             best_move = (i + 1, best_move[1] + 1)
-    print(pokemon.moves[best_move[0] - 1]['name'], best_move[1])
+    print('Best', pokemon_moves[best_move[0] - 1]['move'], best_move[1])
     return best_move
 
 

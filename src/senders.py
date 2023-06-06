@@ -3,7 +3,7 @@ from datetime import datetime
 
 class Sender():
     """
-    Class helper for sending showdown messages.
+    Class singleton to send showdown messages.
     """
 
     def __new__(cls, _=None):

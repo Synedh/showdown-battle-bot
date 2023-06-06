@@ -8,7 +8,6 @@ def major_actions(battle: Battle, command: str, split_line: list[str]):
             pass
         case "switch" if battle.player_id not in split_line[0]:
             # Enemy pokemon has switched in
-            print('|'.join(split_line[0:2]))
             regex = re.compile(r'p\da: (.*?)\|(.*?), (?:L(\d+), )?.*')
             name, variant, level = regex.match('|'.join(split_line[0:2])).groups()
             battle.update_enemy(name, split_line[2], variant, level if level else '100')
