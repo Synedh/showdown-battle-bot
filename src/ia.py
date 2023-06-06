@@ -89,9 +89,15 @@ def effi_move(move, pkm1, pkm2, team):
         effi *= 1.2
     elif pkm1.item == "thickclub":
         effi *= 2
+
+    if move["category"] == "Special":
+        effi *= pkm1.buff_affect("spa") / pkm2.buff_affect("spd")
+    elif move["category"] == "Physical":
+        effi *= pkm1.buff_affect("atk") / pkm2.buff_affect("def")
+
     if (move["type"] == "Ground" and ("Levitate" in pkm2.abilities or pkm2.item == "Air Balloon")
-            or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
-            or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
+        or move["type"] == "Water" and "Water Absorb" in pkm2.abilities
+        or move["type"] == "Electric" and "Volt Absorb" in pkm2.abilities):
         effi = 0
 
     if move["id"] in non_volatile_status_moves and pkm2.status == Status.UNK:
@@ -116,13 +122,13 @@ def effi_pkm(pkm1, pkm2, team):
         dmg = effi_move(move, pkm1, pkm2, team)
         if effi1 < dmg:
             effi1 = dmg
-    if effi1 >= 150 and pkm1.stats["spe"] - pkm2.stats["spe"] > 10:
+    if effi1 >= 150 and pkm1.stats["spe"] * pkm1.buff_affect("spe") - pkm2.stats["spe"] * pkm2.buff_affect("spe") > 10:
         return effi1
     for move in pkm2.moves:
         dmg = effi_move(move, pkm2, pkm1, team)
         if effi2 < dmg:
             effi2 = dmg
-    if effi2 >= 150 and pkm2.stats["spe"] - pkm1.stats["spe"] > 10:
+    if effi2 >= 150 and pkm2.stats["spe"] * pkm1.buff_affect("spe") - pkm1.stats["spe"] * pkm2.buff_affect("spe") > 10:
         return -effi2
     return effi1 - effi2
 
@@ -197,7 +203,9 @@ def make_best_action(battle):
 
     switch = make_best_switch(battle)
     if (switch[1] > effi_pkm(bot_pkm, enm_pkm, battle.enemy_team)
-        and (best_enm_atk > 150 and bot_pkm.stats["spe"] - enm_pkm.stats["spe"] < 10 or best_bot_atk < 100)
-            and switch[0]):
+        and (best_enm_atk > 150
+             and (bot_pkm.stats["spe"] * bot_pkm.buff_affect("spe")
+                  - enm_pkm.stats["spe"] * bot_pkm.buff_affect("spe")) < 10
+             or best_bot_atk < 100) and switch[0]):
         return "switch", switch[0]
     return "move", make_best_move(battle)[0]

@@ -14,7 +14,7 @@ class Battle:
     def __init__(self, battletag):
         """
         init Battle method.
-        :param room_id: Id of battle.
+        :param battletag: String, battletag of battle.
         """
         self.bot_team = Team()
         self.enemy_team = Team()
@@ -94,6 +94,46 @@ class Battle:
         """
         self.enemy_team.active().item = item
 
+    def set_bot_buff(self, stat, quantity):
+        modifs = {
+            "-6": 1/4,
+            "-5": 2/7,
+            "-4": 1/3,
+            "-3": 2/5,
+            "-2": 1/2,
+            "-1": 2/3,
+            "0": 1,
+            "1": 3/2,
+            "2": 2,
+            "3": 5/2,
+            "4": 3,
+            "5": 7/2,
+            "6": 4
+        }
+
+        buff = self.bot_team.active().buff[stat][0] + quantity
+        self.bot_team.active().buff[stat] = [buff, modifs[buff]]
+
+    def set_enemy_buff(self, stat, quantity):
+        modifs = {
+            "-6": 1/4,
+            "-5": 2/7,
+            "-4": 1/3,
+            "-3": 2/5,
+            "-2": 1/2,
+            "-1": 2/3,
+            "0": 1,
+            "1": 3/2,
+            "2": 2,
+            "3": 5/2,
+            "4": 3,
+            "5": 7/2,
+            "6": 4,
+        }
+
+        buff = self.enemy_team.active().buff[stat][0] + quantity
+        self.enemy_team.active().buff[stat] = [buff, modifs[buff]]
+
     async def make_move(self, wensocket):
         """
         Call function to send move and use the sendmove sender.
@@ -107,7 +147,7 @@ class Battle:
     async def make_switch(self, websocket):
         """
         Call function to send swich and use the sendswitch sender.
-        :param wensocket: Websocket stream.
+        :param websocket: Websocket stream.
         """
         await senders.sendswitch(websocket, self.battletag, make_best_switch(self)[0], self.turn)
 

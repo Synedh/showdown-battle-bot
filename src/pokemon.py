@@ -63,6 +63,13 @@ class Pokemon:
         self.abilities = []
         self.stats = {}
         self.moves = []
+        self.buff = {
+            "atk": [0, 1],
+            "def": [0, 1],
+            "spa": [0, 1],
+            "spd": [0, 1],
+            "spe": [0, 1]
+        }
 
     def load_unknown(self):
         """
@@ -92,6 +99,14 @@ class Pokemon:
             json_file = json.load(data_file)
             for move in moves:
                 self.moves.append(json_file[move.replace('60', '')])
+
+    def buff_affect(self, stat):
+        """
+        Return buff corresponding to stat
+        :param stat: String : ["atk", "def", "spa", "spd", "spe"]
+        :return: Integer
+        """
+        return self.buff[stat][1]
 
     def __repr__(self):
         return str(vars(self))

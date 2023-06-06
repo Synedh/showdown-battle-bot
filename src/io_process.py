@@ -51,12 +51,22 @@ async def battle_tag(websocket, message):
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
-            elif current[1] == "-status":
+            elif current[1] == "-status" and battle.player_id not in current[2]:
                 battle.update_status_enemy(current[3])
             elif current[1] == "-item" and battle.player_id not in current[2]:
                 battle.set_enemy_item(current[3])
             elif current[1] == "-enditem" and battle.player_id not in current[2]:
                 battle.set_enemy_item("")
+            elif current[1] == "-buff":
+                if battle.player_id in current[2]:
+                    battle.set_bot_buff(current[3], int(current[4]))
+                else:
+                    battle.set_enemy_buff(current[3], int(current[4]))
+            elif current[1] == "-unbuff":
+                if battle.player_id in current[2]:
+                    battle.set_bot_buff(current[3], - int(current[4]))
+                else:
+                    battle.set_enemy_buff(current[3], - int(current[4]))
             elif current[1] == "callback" and current[2] == "trapped":
                 await battle.make_move(websocket)
             elif current[1] == "win":
@@ -93,7 +103,7 @@ async def stringing(websocket, message):
         # Si quelqu'un envoie un challenge, alors accepter
         try:
             if string_tab[2].split('\"')[3] != "challengeTo":
-                if string_tab[2].split('\"')[5] in ["gen7randombattle", "gen7monotyperandombattle",]:
+                if string_tab[2].split('\"')[5] in ["gen7randombattle", "gen7monotyperandombattle"]:
                     await senders.sender(websocket, "", "/accept " + string_tab[2].split('\"')[3])
                 else:
                     await senders.sender(websocket, "", "/reject " + string_tab[2].split('\"')[3])
