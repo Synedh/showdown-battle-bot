@@ -14,6 +14,7 @@ async def main():
             print("<< {}".format(message))
             await stringing(websocket, message)
 
+
 def test():
     """
     Test function. Allow to test damages calculation between two pokemons.
@@ -27,11 +28,9 @@ def test():
     pkm2.load_unknown()
 
     print(pkm1.moves[1])
-
     print(effi_move(pkm1.moves[1], pkm1, pkm2, []))
 
 
-
 if __name__ == "__main__":
-    # asyncio.get_event_loop().run_until_complete(main())
-    test()
+    asyncio.get_event_loop().run_until_complete(main())
+    # test()

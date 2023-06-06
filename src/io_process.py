@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+from src import senders
+from src.battlelog_parsing import battlelog_parsing
 from src.login import log_in
 from src.battle import Battle
-from src import senders
 
 battles = []
 nb_fights_max = 20
@@ -16,7 +17,7 @@ formats = [
 ]
 
 
-def check_battle(battle_list, battletag):
+def check_battle(battle_list, battletag) -> Battle:
     """
     Get Battle corresponding to room_id.
     :param battle_list: Array of Battle.
@@ -48,7 +49,7 @@ async def battle_tag(websocket, message):
                 await senders.sendmessage(websocket, battle.battletag, "/timer on")
             elif current[1] == "player" and len(current) > 3 and current[3].lower() == "suchtestbot":
                 # Récupérer l'id joueur du bot
-                battle.set_player_id(current[2])
+                battle.player_id = current[2]
             elif current[1] == "request":
                 # Maj team bot
                 if len(current[2]) == 1:
@@ -58,44 +59,46 @@ async def battle_tag(websocket, message):
                         print(current[3])
                 else:
                     await battle.req_loader(current[2], websocket)
-            elif current[1] == "switch" and battle.player_id not in current[2]:
-                # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
-                battle.update_enemy(current[3].split(',')[0], current[4], current[3].split(',')[1].split('L')[1])
+            # elif current[1] == "switch" and battle.player_id not in current[2]:
+            #     # Récupérer le nom du pkm pour l'ajouter/maj à la team ennemie
+            #     battle.update_enemy(current[3].split(',')[0], current[4], current[3].split(',')[1].split('L')[1])
             elif current[1] == "turn":
                 # Phase de reflexion
                 await battle.make_action(websocket)
-            elif current[1] == "-status" and battle.player_id not in current[2]:
-                battle.update_status_enemy(current[3])
-            elif current[1] == "-item" and battle.player_id not in current[2]:
-                battle.set_enemy_item(current[3])
-            elif current[1] == "-enditem" and battle.player_id not in current[2]:
-                battle.set_enemy_item("")
-            elif current[1] == "-boost":
-                if battle.player_id in current[2]:
-                    battle.set_bot_buff(current[3], int(current[4]))
-                else:
-                    battle.set_enemy_buff(current[3], int(current[4]))
-            elif current[1] == "-unboost":
-                if battle.player_id in current[2]:
-                    battle.set_bot_buff(current[3], - int(current[4]))
-                else:
-                    battle.set_enemy_buff(current[3], - int(current[4]))
+            # elif current[1] == "-status" and battle.player_id not in current[2]:
+            #     battle.update_status_enemy(current[3])
+            # elif current[1] == "-item" and battle.player_id not in current[2]:
+            #     battle.set_enemy_item(current[3])
+            # elif current[1] == "-enditem" and battle.player_id not in current[2]:
+            #     battle.set_enemy_item("")
+            # elif current[1] == "-boost":
+            #     if battle.player_id in current[2]:
+            #         battle.set_bot_buff(current[3], int(current[4]))
+            #     else:
+            #         battle.set_enemy_buff(current[3], int(current[4]))
+            # elif current[1] == "-unboost":
+            #     if battle.player_id in current[2]:
+            #         battle.set_bot_buff(current[3], - int(current[4]))
+            #     else:
+            #         battle.set_enemy_buff(current[3], - int(current[4]))
             elif current[1] == "callback" and current[2] == "trapped":
                 await battle.make_move(websocket)
             elif current[1] == "win":
                 await senders.sendmessage(websocket, battle.battletag, "wp")
                 await senders.leaving(websocket, battle.battletag)
                 battles.remove(battle)
-                with open("log.txt", "r+") as file:
-                    line = file.read().split('/')
-                    file.seek(0)
-                    if "suchtestbot" in current[2].lower():
-                        file.write(str(int(line[0]) + 1) + "/" + line[1] + "/" + str(int(line[2]) + 1))
-                    else:
-                        file.write(line[0] + "/" + str(int(line[1]) + 1) + "/" + str(int(line[2]) + 1))
+                # with open("log.txt", "r+") as file:
+                #     line = file.read().split('/')
+                #     file.seek(0)
+                #     if "suchtestbot" in current[2].lower():
+                #         file.write(str(int(line[0]) + 1) + "/" + line[1] + "/" + str(int(line[2]) + 1))
+                #     else:
+                #         file.write(line[0] + "/" + str(int(line[1]) + 1) + "/" + str(int(line[2]) + 1))
             elif current[1] == "c":
                 # This is a message
                 pass
+            else:
+                battlelog_parsing(battle, current[1:])
         except IndexError:
             pass
 
